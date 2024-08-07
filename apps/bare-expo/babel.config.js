@@ -1,4 +1,4 @@
-module.exports = function (api) {
+module.exports = function(api) {
   api.cache(true);
 
   const moduleResolverConfig = {
@@ -14,7 +14,11 @@ module.exports = function (api) {
   }
 
   return {
+    // [Custom] Needed for decorators
     presets: ['babel-preset-expo'],
-    plugins: [['babel-plugin-module-resolver', moduleResolverConfig]],
+    plugins: [
+      'react-native-reanimated/plugin',
+      ['babel-plugin-module-resolver', moduleResolverConfig],
+    ],
   };
 };

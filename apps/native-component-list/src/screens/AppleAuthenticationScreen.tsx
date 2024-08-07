@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Slider from '@react-native-community/slider';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { type EventSubscription } from 'expo-modules-core';
+import { Subscription } from 'expo-modules-core';
 import React from 'react';
 import { Alert, Button, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -48,7 +48,7 @@ export default class AppleAuthenticationScreen extends React.Component<{}, State
     credentialState: null,
   };
 
-  _subscription?: EventSubscription;
+  _subscription?: Subscription;
 
   componentDidMount() {
     this.checkAvailability();
@@ -119,7 +119,7 @@ export default class AppleAuthenticationScreen extends React.Component<{}, State
       const user = (await this.getUserIdentifier())!;
       const credentialState = await AppleAuthentication.getCredentialStateAsync(user);
       this.setState({ credentialState });
-    } catch {
+    } catch (e) {
       // Obtaining a user or the credentials failed - fallback to not found.
       this.setState({ credentialState: AppleAuthenticationCredentialState.NOT_FOUND });
     }

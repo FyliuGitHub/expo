@@ -1,7 +1,7 @@
 import { H2 } from '@expo/html-elements';
 import { Pedometer } from 'expo-sensors';
 import * as React from 'react';
-import { Platform, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
 import ListButton from '../components/ListButton';
 import usePermissions from '../utilities/usePermissions';
@@ -45,11 +45,6 @@ function usePedometerHistory({
   }, []);
 
   React.useEffect(() => {
-    if (Platform.OS !== 'ios') {
-      setData({ steps: 0 });
-      return;
-    }
-
     Pedometer.getStepCountAsync(start, end).then((data) => {
       if (isMounted.current) {
         setData(data);

@@ -1,7 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/build/MaterialCommunityIcons';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as React from 'react';
-import { StyleSheet } from 'react-native';
 
 import Colors from './constants/Colors';
 import SelectScreen from './screens/SelectScreen';
@@ -19,12 +18,13 @@ const spec = {
   },
 };
 
-// TODO: Disable transition animations in E2E tests
-const shouldDisableTransition = false;
+const shouldDisableTransition = !!global.DETOX;
 
+// Disable transition animations in E2E tests
 const transitionSpec = shouldDisableTransition ? { open: spec, close: spec } : undefined;
 
 export default function AppNavigator(props) {
+
   React.useLayoutEffect(() => {
     if (props.navigation) {
       props.navigation.setOptions({
@@ -34,7 +34,7 @@ export default function AppNavigator(props) {
           const color = focused ? Colors.activeTintColor : Colors.inactiveTintColor;
           return <MaterialCommunityIcons name="format-list-checks" size={27} color={color} />;
         },
-      });
+      })
     }
   }, [props.navigation]);
 
@@ -50,8 +50,8 @@ export default function AppNavigator(props) {
         },
         headerTintColor: Colors.tintColor,
         headerStyle: {
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: Colors.border,
+          borderBottomWidth: 0.5,
+          borderBottomColor: 'rgba(0,0,0,0.1)',
           boxShadow: '',
         },
       }}>

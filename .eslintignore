@@ -12,6 +12,7 @@
 # Git submodules
 
 /react-native-lab/react-native/**
+/docs/react-native-website/**
 
 # Other
 
@@ -20,6 +21,6 @@
 **/bin/**
 **/fastlane/**
 **/ios/**
-**/kotlin/providers/**
+**/providers/**
 **/vendored/**
 /docs/public/static/**

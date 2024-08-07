@@ -1,112 +1,117 @@
 import * as SMS from 'expo-sms';
-import { useReducer, useState } from 'react';
+import React from 'react';
 import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
 
-type State = {
-  message?: string;
+interface State {
   phoneNumbers: string[];
+  message?: string;
+  error?: string;
   result?: string;
-};
-
-export default function SMSScreen() {
-  const [error, setError] = useState<string>();
-  const [state, setState] = useReducer((s: State, a: Partial<State>) => ({ ...s, ...a }), {
-    message: undefined,
-    phoneNumbers: [],
-    result: undefined,
-  });
-
-  const _sendSMS = async () => {
-    const isAvailable = await SMS.isAvailableAsync();
-    if (!isAvailable) {
-      setError('SMS functionality is not available on this device!');
-      setTimeout(() => setError(undefined), 10000);
-      return;
-    }
-    try {
-      if (state.message) {
-        const { result } = await SMS.sendSMSAsync(state.phoneNumbers, state.message);
-        setState({ phoneNumbers: [], message: undefined, result });
-
-        setTimeout(() => setState({ result: undefined }), 5000);
-      }
-    } catch (e) {
-      setError(e.message);
-
-      setTimeout(() => setError(undefined), 10000);
-    }
-  };
-
-  const _sendSMSWithInvalidRecipient = async (address: null | undefined) => {
-    const isAvailable = await SMS.isAvailableAsync();
-    if (!isAvailable) {
-      setError('SMS functionality is not available on this device!');
-      setTimeout(() => setError(undefined), 10000);
-      return;
-    }
-    try {
-      if (state.message) {
-        // @ts-ignore -- testing if addresses === null is handled
-        // expected behavior: exception is thrown
-        const { result } = await SMS.sendSMSAsync(address, state.message);
-        setState({
-          phoneNumbers: [],
-          message: undefined,
-          result,
-        });
-
-        setTimeout(() => setState({ result: undefined }), 5000);
-      }
-    } catch (e) {
-      setError(e.message);
-      setTimeout(() => setError(undefined), 10000);
-    }
-  };
-
-  return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.phoneNumbers}
-        placeholder="Phone numbers, comma separated"
-        value={state.phoneNumbers.join(',')}
-        onChangeText={(phoneNumbers) =>
-          setState({ phoneNumbers: phoneNumbers.split(',').map((e) => e.trim()) })
-        }
-      />
-      <TextInput
-        style={styles.message}
-        placeholder="Message"
-        value={state.message}
-        onChangeText={(message) => setState({ message })}
-      />
-      <Button title="Send" disabled={!state.message} onPress={_sendSMS} />
-      <Button
-        title="Send message with null recipient"
-        disabled={!state.message}
-        onPress={() => _sendSMSWithInvalidRecipient(undefined)}
-      />
-      <Button
-        title="Send message with undefined recipient"
-        disabled={!state.message}
-        onPress={() => _sendSMSWithInvalidRecipient(null)}
-      />
-      {error && (
-        <View style={[styles.textView, styles.errorView]}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      )}
-      {state.result && (
-        <View style={[styles.textView, styles.resultView]}>
-          <Text>{state.result}</Text>
-        </View>
-      )}
-    </View>
-  );
 }
 
-SMSScreen.navigationOptions = {
-  title: 'SMS',
-};
+// See: https://github.com/expo/expo/pull/10229#discussion_r490961694
+// eslint-disable-next-line @typescript-eslint/ban-types
+export default class SMSScreen extends React.Component<{}, State> {
+  static navigationOptions = {
+    title: 'SMS',
+  };
+
+  readonly state: State = {
+    phoneNumbers: [],
+  };
+
+  _sendSMS = async () => {
+    const isAvailable = await SMS.isAvailableAsync();
+    if (!isAvailable) {
+      this.setState({
+        error: 'SMS functionality is not available on this device!',
+      });
+      setTimeout(() => this.setState({ error: undefined }), 10000);
+      return;
+    }
+    try {
+      if (this.state.message) {
+        const { result } = await SMS.sendSMSAsync(this.state.phoneNumbers, this.state.message);
+        this.setState({ phoneNumbers: [], message: undefined, result });
+        setTimeout(() => this.setState({ result: undefined }), 5000);
+      }
+    } catch (e) {
+      this.setState({ error: e.message });
+      setTimeout(() => this.setState({ error: undefined }), 10000);
+    }
+  };
+
+  _sendSMSWithInvalidRecipient = async (address: null | undefined) => {
+    const isAvailable = await SMS.isAvailableAsync();
+    if (!isAvailable) {
+      this.setState({
+        error: 'SMS functionality is not available on this device!',
+      });
+      setTimeout(() => this.setState({ error: undefined }), 10000);
+      return;
+    }
+    try {
+      if (this.state.message) {
+        // @ts-ignore -- testing if addresses === null is handled
+        // expected behavior: exception is thrown
+        const { result } = await SMS.sendSMSAsync(address, this.state.message);
+        this.setState({ phoneNumbers: [], message: undefined, result });
+        setTimeout(() => this.setState({ result: undefined }), 5000);
+      }
+    } catch (e) {
+      this.setState({ error: e.message });
+      setTimeout(() => this.setState({ error: undefined }), 10000);
+    }
+  };
+
+  render() {
+    return (
+      <View style={styles.container}>
+        <TextInput
+          style={styles.phoneNumbers}
+          placeholder="Phone numbers, comma separated"
+          value={this.state.phoneNumbers.join(',')}
+          onChangeText={(phoneNumbers) =>
+            this.setState({
+              phoneNumbers: phoneNumbers.split(',').map((e) => e.trim()),
+            })
+          }
+        />
+        <TextInput
+          style={styles.message}
+          placeholder="Message"
+          value={this.state.message}
+          onChangeText={(message) => this.setState({ message })}
+        />
+        <Button title="Send" disabled={!this.state.message} onPress={this._sendSMS}>
+          Send SMS
+        </Button>
+        <Button
+          title="Send message with null recipient"
+          disabled={!this.state.message}
+          onPress={() => this._sendSMSWithInvalidRecipient(undefined)}>
+          Send SMS
+        </Button>
+        <Button
+          title="Send message with undefined recipient"
+          disabled={!this.state.message}
+          onPress={() => this._sendSMSWithInvalidRecipient(null)}>
+          Send SMS
+        </Button>
+        {this.state.error && (
+          <View style={[styles.textView, styles.errorView]}>
+            <Text style={styles.errorText}>{this.state.error}</Text>
+          </View>
+        )}
+        {this.state.result && (
+          <View style={[styles.textView, styles.resultView]}>
+            <Text>{this.state.result}</Text>
+          </View>
+        )}
+      </View>
+    );
+  }
+}
 
 const styles = StyleSheet.create({
   container: {

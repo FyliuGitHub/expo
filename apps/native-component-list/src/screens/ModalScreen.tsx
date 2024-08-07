@@ -1,4 +1,4 @@
-import { useReducer } from 'react';
+import * as React from 'react';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 
 import Button from '../components/Button';
@@ -9,68 +9,70 @@ interface State {
   animationType?: 'none' | 'slide' | 'fade';
 }
 
-export default function ModalScreen() {
-  const [state, setState] = useReducer((s: State, a: Partial<State>) => ({ ...s, ...a }), {
+// See: https://github.com/expo/expo/pull/10229#discussion_r490961694
+// eslint-disable-next-line @typescript-eslint/ban-types
+export default class ModalScreen extends React.Component<{}, State> {
+  static navigationOptions = {
+    title: 'Modal',
+  };
+
+  readonly state: State = {
     modalVisible: false,
     animationType: 'none',
-  });
+  };
 
-  return (
-    <View style={styles.container}>
-      <Modal
-        visible={false}
-        onRequestClose={() => {
-          setState({ modalVisible: false });
-          alert('Modal has been closed.');
-        }}>
-        <View />
-      </Modal>
+  render() {
+    return (
+      <View style={styles.container}>
+        <Modal
+          visible={false}
+          onRequestClose={() => {
+            alert('Modal has been closed.');
+          }}>
+          <View />
+        </Modal>
 
-      <Modal
-        animationType={state.animationType}
-        transparent={false}
-        visible={state.modalVisible}
-        onRequestClose={() => {
-          setState({ modalVisible: false });
-          alert('Modal has been closed.');
-        }}>
-        <View style={styles.modalContainer}>
-          <View>
-            <Text>Hello World!</Text>
-            <Button
-              style={styles.button}
-              onPress={() => {
-                setState({ modalVisible: false });
-              }}
-              title="Hide Modal"
-            />
+        <Modal
+          animationType={this.state.animationType}
+          transparent={false}
+          visible={this.state.modalVisible}
+          onRequestClose={() => {
+            alert('Modal has been closed.');
+          }}>
+          <View style={styles.modalContainer}>
+            <View>
+              <Text>Hello World!</Text>
+              <Button
+                style={styles.button}
+                onPress={() => {
+                  this.setState({ modalVisible: false });
+                }}
+                title="Hide Modal"
+              />
+            </View>
           </View>
-        </View>
-      </Modal>
-      <Button
-        style={styles.button}
-        onPress={() => {
-          setState({ modalVisible: true, animationType: 'slide' });
-        }}
-        title="Show modal (slide)"
-      />
+        </Modal>
+        <Button
+          style={styles.button}
+          onPress={() => {
+            this.setState({ modalVisible: true, animationType: 'slide' });
+          }}
+          title="Show modal (slide)"
+        />
 
-      {Layout.isSmallDevice && <View style={{ marginBottom: 10 }} />}
+        {Layout.isSmallDevice && <View style={{ marginBottom: 10 }} />}
 
-      <Button
-        style={styles.button}
-        onPress={() => {
-          setState({ modalVisible: true, animationType: 'fade' });
-        }}
-        title="Show modal (fade)"
-      />
-    </View>
-  );
+        <Button
+          style={styles.button}
+          onPress={() => {
+            this.setState({ modalVisible: true, animationType: 'fade' });
+          }}
+          title="Show modal (fade)"
+        />
+      </View>
+    );
+  }
 }
-
-ModalScreen.navigationOptions = {
-  title: 'Modal',
-};
 
 const styles = StyleSheet.create({
   container: {

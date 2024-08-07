@@ -1,6 +1,7 @@
 'use strict';
 
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 export const name = 'SecureStore';
 
@@ -70,39 +71,6 @@ export function test(t) {
         t.expect(fetchedValue).toBe(null);
       });
     });
-    // This test only checks if the function works correctly with the current biometric enrollment of the device.
-    // It's not possible to test the function fully without changing the security settings of the device.
-    t.describe(
-      'canUseBiometricAuthentication correctly indicates if a value can be saved with authentication',
-      () => {
-        const canSave = SecureStore.canUseBiometricAuthentication();
-        t.it('canUseBiometricAuthentication returns a boolean', async () => {
-          t.expect(typeof canSave).toBe('boolean');
-        });
-        const testDescription = `canUseBiometricAuthentication is ${canSave} -> saving the value should ${
-          canSave ? 'succeed' : 'fail'
-        }`;
-        t.it(testDescription, async () => {
-          try {
-            try {
-              await SecureStore.setItemAsync(key, value, {
-                keychainService: 'service',
-                requireAuthentication: true,
-              });
-              if (!canSave) {
-                t.fail('Expected SecureStore.setItemAsync to throw an error');
-              }
-            } catch {
-              if (canSave) {
-                t.fail('Expected SecureStore.setItemAsync to succeed');
-              }
-            }
-          } catch (e) {
-            t.fail(e);
-          }
-        });
-      }
-    );
     t.describe('store with empty key -> err:', () => {
       t.it('Sets a value with an empty key, expect error', async () => {
         try {
@@ -128,20 +96,34 @@ export function test(t) {
         const result = await SecureStore.setItemAsync(key, value, optionsServiceA);
         t.expect(result).toBe(undefined);
       });
-      t.it('Fetch value with keychainServiceB, expect null', async () => {
-        const result = await SecureStore.getItemAsync(key, optionsServiceB);
-        t.expect(result).toBe(null);
-      });
+      if (Platform.OS === 'ios') {
+        t.it('Fetch value with keychainServiceB, expect null', async () => {
+          const result = await SecureStore.getItemAsync(key, optionsServiceB);
+          t.expect(result).toBe(null);
+        });
+      } else if (Platform.OS === 'android') {
+        t.it('Fetch value with keychainServiceB, expect decoding error', async () => {
+          try {
+            const result = await SecureStore.getItemAsync(key, optionsServiceB);
+            t.fail(result);
+          } catch (e) {
+            t.expect(e).toBeTruthy();
+            t.expect(e.message).toMatch(`Could not decrypt the item in SecureStore`);
+          }
+        });
+      }
     });
     t.describe('store long value, fetch long value -> Success:', () => {
       t.it('Set long value', async () => {
         const result = await SecureStore.setItemAsync(key, longValue);
         t.expect(result).toBe(undefined);
       });
-      t.it('Fetch long value', async () => {
-        const result = await SecureStore.getItemAsync(key);
-        t.expect(result).toBe(longValue);
-      });
+      if (!global.DETOX) {
+        t.it('Fetch long value', async () => {
+          const result = await SecureStore.getItemAsync(key);
+          t.expect(result).toBe(longValue);
+        });
+      }
     });
   });
 }

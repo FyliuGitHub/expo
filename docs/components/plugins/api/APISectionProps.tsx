@@ -1,192 +1,144 @@
-import { mergeClasses } from '@expo/styleguide';
+import { css } from '@emotion/react';
+import React from 'react';
 
-import { ELEMENT_SPACING, STYLES_SECONDARY } from './styles';
-
+import { InlineCode } from '~/components/base/code';
+import { H4 } from '~/components/base/headings';
+import { LI, UL } from '~/components/base/list';
+import { P } from '~/components/base/paragraph';
+import { H2, H3, H3Code } from '~/components/plugins/Headings';
 import {
+  CommentTagData,
   DefaultPropsDefinitionData,
   PropData,
   PropsDefinitionData,
   TypeDefinitionData,
 } from '~/components/plugins/api/APIDataTypes';
-import { APISectionDeprecationNote } from '~/components/plugins/api/APISectionDeprecationNote';
-import { APISectionPlatformTags } from '~/components/plugins/api/APISectionPlatformTags';
 import {
-  BoxSectionHeader,
   CommentTextBlock,
-  getCommentContent,
   getCommentOrSignatureComment,
-  getH3CodeWithBaseNestingLevel,
-  getTagData,
-  getTagNamesList,
   renderTypeOrSignatureType,
   resolveTypeName,
-  STYLES_APIBOX,
-  STYLES_APIBOX_NESTED,
-  STYLES_NOT_EXPOSED_HEADER,
-  TypeDocKind,
+  STYLES_SECONDARY,
 } from '~/components/plugins/api/APISectionUtils';
-import { CODE, H2, H3, H4, LI, MONOSPACE, P, UL } from '~/ui/components/Text';
 
 export type APISectionPropsProps = {
   data: PropsDefinitionData[];
-  sdkVersion: string;
   defaultProps?: DefaultPropsDefinitionData;
   header?: string;
 };
 
-export type RenderPropOptions = {
-  exposeInSidebar?: boolean;
-  baseNestingLevel?: number;
-};
-
 const UNKNOWN_VALUE = '...';
+
+const PROP_LIST_ELEMENT_STYLE = css`
+  padding: 0;
+`;
 
 const extractDefaultPropValue = (
   { comment, name }: PropData,
   defaultProps?: DefaultPropsDefinitionData
 ): string | undefined => {
-  const annotationDefault = getTagData('default', comment);
-  if (annotationDefault) {
-    return getCommentContent(annotationDefault.content);
+  const annotationDefault = comment?.tags?.filter((tag: CommentTagData) => tag.tag === 'default');
+  if (annotationDefault?.length) {
+    return annotationDefault[0].text;
   }
   return defaultProps?.type?.declaration?.children?.filter(
     (defaultProp: PropData) => defaultProp.name === name
   )[0]?.defaultValue;
 };
 
-const renderInheritedProp = (ip: TypeDefinitionData, sdkVersion: string) => {
+const renderInheritedProp = (ip: TypeDefinitionData) => {
   return (
     <LI key={`inherited-prop-${ip.name}-${ip.type}`}>
-      <CODE>{resolveTypeName(ip, sdkVersion)}</CODE>
+      <InlineCode>{resolveTypeName(ip)}</InlineCode>
     </LI>
   );
 };
 
 const renderInheritedProps = (
-  data: PropsDefinitionData | undefined,
-  sdkVersion: string,
+  data: TypeDefinitionData[] | undefined,
   exposeInSidebar?: boolean
 ): JSX.Element | undefined => {
-  const inheritedData = data?.type?.types ?? data?.extendedTypes ?? [];
-  const inheritedProps =
-    inheritedData.filter((ip: TypeDefinitionData) => ip.type === 'reference') ?? [];
+  const inheritedProps = data?.filter((ip: TypeDefinitionData) => ip.type === 'reference') ?? [];
   if (inheritedProps.length) {
     return (
       <>
         {exposeInSidebar ? <H3>Inherited Props</H3> : <H4>Inherited Props</H4>}
-        <UL>{inheritedProps.map(i => renderInheritedProp(i, sdkVersion))}</UL>
+        <UL>{inheritedProps.map(renderInheritedProp)}</UL>
       </>
     );
   }
   return undefined;
 };
 
-const getPropsBaseTypes = (def: PropsDefinitionData) => {
-  if (def.kind === TypeDocKind.TypeAlias || def.kind === TypeDocKind.TypeAlias_Legacy) {
-    const baseTypes = def?.type?.types
-      ? def.type.types?.filter((t: TypeDefinitionData) => t.declaration)
-      : [def.type];
-    return baseTypes.map(def => def?.declaration?.children);
-  } else if (def.kind === TypeDocKind.Interface) {
-    return def.children?.filter(child => !child.inheritedFrom) ?? [];
-  }
-  return [];
-};
-
 const renderProps = (
-  def: PropsDefinitionData,
-  sdkVersion: string,
+  { name, type }: PropsDefinitionData,
   defaultValues?: DefaultPropsDefinitionData,
   exposeInSidebar?: boolean
 ): JSX.Element => {
-  const propsDeclarations = getPropsBaseTypes(def)
+  const baseTypes = type.types
+    ? type.types?.filter((t: TypeDefinitionData) => t.declaration)
+    : [type];
+  const propsDeclarations = baseTypes
+    .map(def => def?.declaration?.children)
     .flat()
     .filter((dec, i, arr) => arr.findIndex(t => t?.name === dec?.name) === i);
 
   return (
-    <div key={`props-definition-${def.name}`} className="[&>*:last-child]:!mb-0">
-      {propsDeclarations?.map(prop =>
-        prop
-          ? renderProp(prop, sdkVersion, extractDefaultPropValue(prop, defaultValues), {
-              exposeInSidebar,
-            })
-          : null
-      )}
-      {renderInheritedProps(def, sdkVersion, exposeInSidebar)}
+    <div key={`props-definition-${name}`}>
+      <UL>
+        {propsDeclarations?.map(prop =>
+          prop
+            ? renderProp(prop, extractDefaultPropValue(prop, defaultValues), exposeInSidebar)
+            : null
+        )}
+      </UL>
+      {renderInheritedProps(type.types, exposeInSidebar)}
     </div>
   );
 };
 
-export const renderProp = (
+const renderProp = (
   { comment, name, type, flags, signatures }: PropData,
-  sdkVersion: string,
   defaultValue?: string,
-  { exposeInSidebar, ...options }: RenderPropOptions = {}
-) => {
-  const baseNestingLevel = options.baseNestingLevel ?? (exposeInSidebar ? 3 : 4);
-  const HeaderComponent = getH3CodeWithBaseNestingLevel(baseNestingLevel);
-  const extractedSignatures = signatures || type?.declaration?.signatures;
-  const extractedComment = getCommentOrSignatureComment(comment, extractedSignatures);
+  exposeInSidebar?: boolean
+) => (
+  <LI key={`prop-entry-${name}`} customCss={exposeInSidebar ? PROP_LIST_ELEMENT_STYLE : undefined}>
+    {exposeInSidebar ? <H3>{name}</H3> : <H4>{name}</H4>}
+    <P>
+      {flags?.isOptional && <span css={STYLES_SECONDARY}>Optional&emsp;&bull;&emsp;</span>}
+      <span css={STYLES_SECONDARY}>Type:</span> {renderTypeOrSignatureType(type, signatures, true)}
+      {defaultValue && defaultValue !== UNKNOWN_VALUE ? (
+        <span>
+          <span css={STYLES_SECONDARY}>&emsp;&bull;&emsp;Default:</span>{' '}
+          <InlineCode>{defaultValue}</InlineCode>
+        </span>
+      ) : null}
+    </P>
+    <CommentTextBlock comment={getCommentOrSignatureComment(comment, signatures)} />
+  </LI>
+);
 
-  return (
-    <div
-      key={`prop-entry-${name}`}
-      css={[STYLES_APIBOX, STYLES_APIBOX_NESTED]}
-      className="!pb-4 [&>*:last-child]:!mb-0">
-      <APISectionDeprecationNote comment={extractedComment} sticky />
-      <APISectionPlatformTags comment={comment} />
-      <HeaderComponent tags={getTagNamesList(comment)}>
-        <MONOSPACE
-          weight="medium"
-          css={!exposeInSidebar && STYLES_NOT_EXPOSED_HEADER}
-          className="wrap-anywhere">
-          {name}
-        </MONOSPACE>
-      </HeaderComponent>
-      <P className={mergeClasses(extractedComment && ELEMENT_SPACING)}>
-        {flags?.isOptional && <span className={STYLES_SECONDARY}>Optional&emsp;&bull;&emsp;</span>}
-        <span className={STYLES_SECONDARY}>Type:</span>{' '}
-        {renderTypeOrSignatureType({ type, signatures: extractedSignatures, sdkVersion })}
-        {defaultValue && defaultValue !== UNKNOWN_VALUE ? (
-          <span>
-            <span className={STYLES_SECONDARY}>&emsp;&bull;&emsp;Default:</span>{' '}
-            <CODE>{defaultValue}</CODE>
-          </span>
-        ) : null}
-      </P>
-      <CommentTextBlock comment={extractedComment} includePlatforms={false} />
-    </div>
-  );
-};
-
-const APISectionProps = ({
+const APISectionProps: React.FC<APISectionPropsProps> = ({
   data,
   defaultProps,
   header = 'Props',
-  sdkVersion,
-}: APISectionPropsProps) => {
-  const baseProp = data.find(prop => prop.name === header);
-  return data?.length > 0 ? (
+}) =>
+  data?.length ? (
     <>
       {header === 'Props' ? (
         <H2 key="props-header">{header}</H2>
       ) : (
-        <div>
-          {baseProp && <APISectionDeprecationNote comment={baseProp.comment} />}
-          <BoxSectionHeader
-            text={header}
-            className="!text-secondary !font-medium"
-            exposeInSidebar
-            baseNestingLevel={99}
-          />
-          {baseProp && baseProp.comment ? <CommentTextBlock comment={baseProp.comment} /> : null}
-        </div>
+        <>
+          <H3Code key={`${header}-props-header`}>
+            <InlineCode>{header}</InlineCode>
+          </H3Code>
+          <br />
+        </>
       )}
       {data.map((propsDefinition: PropsDefinitionData) =>
-        renderProps(propsDefinition, sdkVersion, defaultProps, header === 'Props')
+        renderProps(propsDefinition, defaultProps, header === 'Props')
       )}
     </>
   ) : null;
-};
 
 export default APISectionProps;

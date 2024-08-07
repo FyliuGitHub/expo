@@ -2,15 +2,13 @@
 
 set -exo pipefail
 
-if [[ -z "$EXPO_TOOLS_DIR" ]]; then
+if [ -z "$EXPO_TOOLS_DIR" ]; then
   EXPO_TOOLS_DIR="${SRCROOT}/../../../tools"
 fi
 
-if [[ -f "$PODS_ROOT/../.xcode.env" ]]; then
-  source "$PODS_ROOT/../.xcode.env"
-fi
-if [[ -f "$PODS_ROOT/../.xcode.env.local" ]]; then
-  source "$PODS_ROOT/../.xcode.env.local"
+# Sourcing login scripts on macOS-11 runners is broken but can be omitted.
+if [ -z "$CI" ]; then
+  source ${EXPO_TOOLS_DIR}/source-login-scripts.sh
 fi
 
 export PATH="${SRCROOT}/../../../bin:$PATH"

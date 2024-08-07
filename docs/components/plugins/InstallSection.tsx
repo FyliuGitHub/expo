@@ -1,49 +1,67 @@
-import { PropsWithChildren } from 'react';
+import { css } from '@emotion/react';
+import { theme } from '@expo/styleguide';
+import * as React from 'react';
 
-import { usePageMetadata } from '~/providers/page-metadata';
-import { Terminal } from '~/ui/components/Snippet';
-import { A, P, DEMI, CODE } from '~/ui/components/Text';
+import TerminalBlock from './TerminalBlock';
 
-type InstallSectionProps = PropsWithChildren<{
+import * as Constants from '~/constants/theme';
+
+const STYLES_P = css`
+  line-height: 1.8rem;
+  margin-top: 1.4rem;
+  margin-bottom: 1.4rem;
+  color: ${theme.text.default};
+`;
+
+const STYLES_BOLD = css`
+  font-family: ${Constants.fonts.demi};
+  font-weight: 400;
+  text-decoration: none;
+  color: ${theme.link.default};
+  :hover {
+    text-decoration: underline;
+  }
+`;
+const STYLES_LINK = css`
+  text-decoration: none;
+  color: ${theme.link.default};
+  :hover {
+    text-decoration: underline;
+  }
+`;
+
+type Props = {
   packageName: string;
   hideBareInstructions?: boolean;
   cmd?: string[];
   href?: string;
-}>;
+};
 
 const getPackageLink = (packageNames: string) =>
-  `https://github.com/expo/expo/tree/main/packages/${packageNames.split(' ')[0]}`;
+  `https://github.com/expo/expo/tree/master/packages/${packageNames.split(' ')[0]}`;
 
-const getInstallCmd = (packageName: string) => `$ npx expo install ${packageName}`;
-
-export default function InstallSection({
+const InstallSection: React.FC<Props> = ({
   packageName,
   hideBareInstructions = false,
-  cmd = [getInstallCmd(packageName)],
+  cmd = [`expo install ${packageName}`],
   href = getPackageLink(packageName),
-}: InstallSectionProps) {
-  const { sourceCodeUrl } = usePageMetadata();
+}) => (
+  <div>
+    <TerminalBlock cmd={cmd} />
+    {hideBareInstructions ? null : (
+      <p css={STYLES_P}>
+        If you're installing this in a{' '}
+        <a css={STYLES_LINK} href="/introduction/managed-vs-bare/#bare-workflow">
+          bare React Native app
+        </a>
+        , you should also follow{' '}
+        <a css={STYLES_BOLD} href={href}>
+          these additional installation instructions
+        </a>
+        .
+      </p>
+    )}
+  </div>
+);
 
-  return (
-    <>
-      <Terminal cmd={cmd} />
-      {hideBareInstructions ? null : (
-        <P>
-          If you are installing this in an{' '}
-          <A href="/bare/overview/">existing React Native app (bare workflow)</A>, start by{' '}
-          <A href="/bare/installing-expo-modules/">
-            installing <CODE>expo</CODE>
-          </A>{' '}
-          in your project. Then, follow the{' '}
-          <A href={sourceCodeUrl ?? href}>additional instructions</A> as mentioned by library's
-          README under <DEMI>"Installation in bare React Native projects"</DEMI> section.
-        </P>
-      )}
-    </>
-  );
-}
-
-export const APIInstallSection = (props: InstallSectionProps) => {
-  const { packageName } = usePageMetadata();
-  return <InstallSection {...props} packageName={props.packageName ?? packageName} />;
-};
+export default InstallSection;

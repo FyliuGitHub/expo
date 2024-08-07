@@ -1,9 +1,29 @@
-import { StatusWaitingIcon } from '@expo/styleguide-icons/custom/StatusWaitingIcon';
+import { css } from '@emotion/react';
+import { theme } from '@expo/styleguide';
+import * as React from 'react';
 
+import { H4 } from '~/components/base/headings';
+import { CheckCircle } from '~/components/icons/CheckCircle';
+import { PendingCircle } from '~/components/icons/PendingCircle';
+import { XCircle } from '~/components/icons/XCircle';
 import { ElementType } from '~/types/common';
-import { NoIcon, YesIcon } from '~/ui/components/DocIcons';
-import { Cell, HeaderCell, Row, Table, TableHead } from '~/ui/components/Table';
-import { A, H4 } from '~/ui/components/Text';
+
+const STYLES_TITLE = css`
+  margin-bottom: 1rem;
+`;
+
+const STYLES_LINK = css`
+  text-decoration: none;
+  display: grid;
+  grid-template-columns: 20px auto;
+  text-align: left;
+  grid-gap: 8px;
+  color: ${theme.link.default};
+`;
+
+const STYLES_TABLE = css`
+  table-layout: fixed;
+`;
 
 const platforms = [
   { title: 'Android Device', propName: 'android' },
@@ -19,22 +39,22 @@ type IsSupported = boolean | undefined | { pending: string };
 function getInfo(isSupported: IsSupported, { title }: Platform) {
   if (isSupported === true) {
     return {
-      children: <YesIcon />,
+      children: <CheckCircle size={20} />,
       title: `${title} is supported`,
     };
   } else if (typeof isSupported === 'object') {
     return {
       children: (
-        <A className="grid gap-2 grid-cols-[20px_auto]" href={isSupported.pending}>
-          <StatusWaitingIcon className="icon-md text-icon-info" /> Pending
-        </A>
+        <a css={STYLES_LINK} target="_blank" href={isSupported.pending}>
+          <PendingCircle size={20} /> Pending
+        </a>
       ),
       title: `${title} support is pending`,
     };
   }
 
   return {
-    children: <NoIcon />,
+    children: <XCircle size={20} />,
     title: `${title} is not supported`,
   };
 }
@@ -50,29 +70,31 @@ type Props = {
 
 type PlatformProps = Omit<Props, 'title'>;
 
-const PlatformsSection = (props: Props) => (
-  <>
-    <H4 className="mb-1">{props.title || 'Platform Compatibility'}</H4>
-    <Table className="table-fixed max-sm-gutters:table-auto">
-      <TableHead>
-        <Row>
-          {platforms.map(({ title }) => (
-            <HeaderCell key={title}>{title}</HeaderCell>
-          ))}
-        </Row>
-      </TableHead>
-      <tbody>
-        <Row>
-          {platforms.map(platform => (
-            <Cell
-              key={platform.title}
-              {...getInfo(props[platform.propName as keyof PlatformProps], platform)}
-            />
-          ))}
-        </Row>
-      </tbody>
-    </Table>
-  </>
-);
-
-export default PlatformsSection;
+export default class PlatformsSection extends React.Component<Props> {
+  render() {
+    return (
+      <div>
+        <H4 css={STYLES_TITLE}>{this.props.title || 'Platform Compatibility'}</H4>
+        <table css={STYLES_TABLE}>
+          <thead>
+            <tr>
+              {platforms.map(({ title }) => (
+                <th key={title}>{title}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {platforms.map(platform => (
+                <td
+                  key={platform.title}
+                  {...getInfo(this.props[platform.propName as keyof PlatformProps], platform)}
+                />
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+}

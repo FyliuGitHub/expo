@@ -1,8 +1,8 @@
 import GithubSlugger from 'github-slugger';
 import * as React from 'react';
 
+import { ElementType, PageMetadata } from '../types/common';
 import * as Utilities from './utilities';
-import { ElementType, PageMetadata, RemarkHeading } from '../types/common';
 
 /**
  * These types directly correspond to MDAST node types
@@ -10,7 +10,6 @@ import { ElementType, PageMetadata, RemarkHeading } from '../types/common';
 export enum HeadingType {
   Text = 'text',
   InlineCode = 'inlineCode',
-  CodeFilePath = 'codeFilePath',
 }
 
 /**
@@ -26,14 +25,14 @@ export const BASE_HEADING_LEVEL = 2;
  * How deeply nested headings to display
  * 0 - means only root headings
  *
- * Can be overridden in `.md` pages by setting
+ * Can be overriden in `.md` pages by setting
  * `maxHeadingDepth` attribute
  */
 const DEFAULT_NESTING_LIMIT = 1;
 
 /**
  * Those properties can be customized
- * from markdown pages using heading components
+ * from markdown pages usign heading components
  * from `plugins/Headings.tsx`
  */
 export type AdditionalProps = {
@@ -41,12 +40,9 @@ export type AdditionalProps = {
   sidebarTitle?: string;
   sidebarDepth?: number;
   sidebarType?: HeadingType;
-  tags?: string[];
-  className?: string;
-  iconSize?: 'sm' | 'xs';
 };
 
-type Metadata = Partial<PageMetadata> & { headings: (RemarkHeading & { _processed?: boolean })[] };
+type Metadata = Partial<PageMetadata> & Required<Pick<PageMetadata, 'headings'>>;
 
 /**
  * Single heading entry
@@ -57,7 +53,6 @@ export type Heading = {
   level: number;
   type: HeadingType;
   ref: React.RefObject<any>;
-  tags?: string[];
   metadata?: ElementType<Metadata['headings']>;
 };
 
@@ -88,13 +83,12 @@ export class HeadingManager {
    * @param slugger A _GithubSlugger_ instance
    * @param meta Document metadata gathered by `headingsMdPlugin`.
    */
-  constructor(slugger: GithubSlugger, meta: Metadata) {
+  constructor(slugger: GithubSlugger, meta: Partial<PageMetadata>) {
     this.slugger = slugger;
-    this._meta = meta;
+    this._meta = { headings: meta.headings || [], ...meta };
     this._headings = [];
 
-    const maxHeadingDepth =
-      (meta.maxHeadingDepth ?? DEFAULT_NESTING_LIMIT) + (meta.packageName ? 2 : 0);
+    const maxHeadingDepth = meta.maxHeadingDepth ?? DEFAULT_NESTING_LIMIT;
     this._maxNestingLevel = maxHeadingDepth + BASE_HEADING_LEVEL;
   }
 
@@ -106,22 +100,21 @@ export class HeadingManager {
    * @returns {Object} Newly created heading instance
    */
   addHeading(
-    title: React.ReactNode,
+    title: string | object,
     nestingLevel?: number,
-    additionalProps?: AdditionalProps,
-    id?: string
+    additionalProps?: AdditionalProps
   ): Heading {
     // NOTE (barthap): workaround for complex titles containing both normal text and inline code
     // changing this needs also change in `headingsMdPlugin.js` to make metadata loading correctly
     title = Array.isArray(title) ? title.map(Utilities.toString).join(' ') : title;
 
-    const { hideInSidebar, sidebarTitle, sidebarDepth, sidebarType, tags } = additionalProps ?? {};
+    const { hideInSidebar, sidebarTitle, sidebarDepth, sidebarType } = additionalProps ?? {};
     const levelOverride = sidebarDepth != null ? BASE_HEADING_LEVEL + sidebarDepth : undefined;
 
-    const slug = id ?? Utilities.generateSlug(this.slugger, title);
+    const slug = Utilities.generateSlug(this.slugger, title);
     const realTitle = Utilities.toString(title);
     const meta = this.findMetaForTitle(realTitle);
-    const level = levelOverride ?? nestingLevel ?? meta?.depth ?? BASE_HEADING_LEVEL;
+    const level = levelOverride ?? nestingLevel ?? meta?.level ?? BASE_HEADING_LEVEL;
     const type = sidebarType || (this.isCode(title) ? HeadingType.InlineCode : HeadingType.Text);
 
     const heading = {
@@ -129,7 +122,6 @@ export class HeadingManager {
       slug,
       level,
       type,
-      tags,
       ref: React.createRef(),
       metadata: meta,
     };

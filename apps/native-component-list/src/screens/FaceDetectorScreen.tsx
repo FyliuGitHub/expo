@@ -1,5 +1,6 @@
 import * as FaceDetector from 'expo-face-detector';
 import * as ImagePicker from 'expo-image-picker';
+import { ImageInfo } from 'expo-image-picker/build/ImagePicker.types';
 import React from 'react';
 import { Alert, Image, PixelRatio, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -8,7 +9,7 @@ import ListButton from '../components/ListButton';
 import MonoText from '../components/MonoText';
 
 interface State {
-  selection?: ImagePicker.ImagePickerAsset;
+  selection?: ImagePicker.ImagePickerResult;
   faceDetection?: {
     detecting: boolean;
     faces: FaceDetector.FaceFeature[];
@@ -18,8 +19,9 @@ interface State {
 }
 
 const imageViewSize = 300;
-
-export default class FaceDetectorScreen extends React.Component<object, State> {
+// See: https://github.com/expo/expo/pull/10229#discussion_r490961694
+// eslint-disable-next-line @typescript-eslint/ban-types
+export default class FeceDetectorScreen extends React.Component<{}, State> {
   static navigationOptions = {
     title: 'FaceDetector',
   };
@@ -63,14 +65,13 @@ export default class FaceDetectorScreen extends React.Component<object, State> {
     if (granted || Platform.OS === 'web') {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes,
-        allowsEditing: true,
+        allowsEditing,
       });
-      if (result.canceled) {
+      if (result.cancelled) {
         this.setState({ selection: undefined });
       } else {
-        const [asset] = result.assets;
-        this.setState({ selection: asset });
-        this.detectFaces(asset.uri);
+        this.setState({ selection: result });
+        this.detectFaces(result.uri);
       }
     } else {
       Alert.alert('Permission required!', 'You must allow accessing images in order to proceed.');
@@ -95,7 +96,7 @@ export default class FaceDetectorScreen extends React.Component<object, State> {
   _maybeRenderSelection = () => {
     const { selection } = this.state;
 
-    if (!selection) {
+    if (!selection || selection.cancelled) {
       return;
     }
 
@@ -115,7 +116,7 @@ export default class FaceDetectorScreen extends React.Component<object, State> {
   _maybeRenderFaceDetection = () => {
     const { selection, faceDetection } = this.state;
 
-    if (!selection || !faceDetection) {
+    if (!selection || selection.cancelled || !faceDetection) {
       return;
     }
 
@@ -152,11 +153,11 @@ export default class FaceDetectorScreen extends React.Component<object, State> {
   _maybeRenderDetectedFacesAndLandmarks = () => {
     const { selection, faceDetection } = this.state;
     if (selection && faceDetection) {
-      const { pixelsToDisplayScale } = calculateImageScale(selection);
+      const { pixelsToDisplayScale } = calculateImageScale(selection as ImageInfo);
       return (
         <View
           style={{
-            ...imageOverflowSizeAndPosition(selection),
+            ...imageOverflowSizeAndPosition(selection as ImageInfo),
             position: 'absolute',
           }}>
           {this.state.faceDetection &&
@@ -170,7 +171,7 @@ export default class FaceDetectorScreen extends React.Component<object, State> {
   };
 }
 
-const imageOverflowSizeAndPosition = (image: ImagePicker.ImagePickerAsset) => {
+const imageOverflowSizeAndPosition = (image: ImageInfo) => {
   const { scaledImageWidth, scaledImageHeight } = calculateImageScale(image);
   return {
     top: (imageViewSize - scaledImageHeight) / 2,
@@ -180,7 +181,7 @@ const imageOverflowSizeAndPosition = (image: ImagePicker.ImagePickerAsset) => {
   };
 };
 
-const calculateImageScale = (image: ImagePicker.ImagePickerAsset) => {
+const calculateImageScale = (image: ImageInfo) => {
   let scale = 1;
   const screenMultiplier = PixelRatio.getPixelSizeForLayoutSize(1);
   const imageHeight = image.height / screenMultiplier;

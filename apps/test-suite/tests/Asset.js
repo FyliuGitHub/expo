@@ -1,7 +1,7 @@
 'use strict';
 
-import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system';
+import { Asset } from 'expo-asset';
 
 export const name = 'Asset';
 
@@ -23,7 +23,7 @@ export function test(t) {
         hash: '69d77ab5cba970d7934a5f5bcd8fdd11',
       },
       {
-        module: 'https://static.expo.dev/static/favicons/favicon-light-48x48.png',
+        module: 'https://docs.expo.io/static/images/header-logo.png',
         name: '',
         type: 'png',
         hash: null,
@@ -34,7 +34,7 @@ export function test(t) {
           const asset = Asset.fromModule(module);
           t.expect(asset.name).toBe(name);
           t.expect(asset.type).toBe(type);
-          Object.keys(more).forEach((member) => t.expect(asset[member]).toBe(more[member]));
+          Object.keys(more).forEach(member => t.expect(asset[member]).toBe(more[member]));
         });
 
         t.it("when downloaded, has a 'file://' localUri", async () => {
@@ -50,11 +50,7 @@ export function test(t) {
             const asset = Asset.fromModule(module);
             await asset.downloadAsync();
 
-            const {
-              exists,
-              md5,
-              uri: cacheUri,
-            } = await FileSystem.getInfoAsync(asset.localUri, {
+            const { exists, md5, uri: cacheUri } = await FileSystem.getInfoAsync(asset.localUri, {
               cache: true,
               md5: true,
             });

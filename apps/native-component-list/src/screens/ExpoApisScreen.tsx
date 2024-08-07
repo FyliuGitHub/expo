@@ -1,20 +1,23 @@
-import { Platform } from 'react-native';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { Platform } from 'expo-modules-core';
+import * as Notifications from 'expo-notifications';
+import React from 'react';
 
-import ComponentListScreen from './ComponentListScreen';
 import ExpoAPIIcon from '../components/ExpoAPIIcon';
+import ComponentListScreen from './ComponentListScreen';
+
+try {
+  require('react-native-branch').default.subscribe((bundle: any) => {
+    if (bundle && bundle.params && !bundle.error) {
+      // Alert.alert('Opened Branch link', JSON.stringify(bundle.params, null, 2));
+    }
+  });
+} catch (e) {
+  // Branch is not available, do nothing
+}
 
 if (Platform.OS !== 'web') {
-  // Optionally require expo-notifications as we cannot assume that the module is linked.
-  // It's not available on macOS and tvOS yet and we want to avoid errors caused by the top-level import.
-  const Notifications = (() => {
-    try {
-      return require('expo-notifications');
-    } catch {
-      return null;
-    }
-  })();
-
-  Notifications?.setNotificationHandler({
+  Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
       shouldPlaySound: true,
@@ -27,6 +30,8 @@ const screens = [
   'Accelerometer',
   'ActionSheet',
   'Alert',
+  'Amplitude',
+  'AppAuth',
   'Appearance',
   'AppleAuthentication',
   'Audio',
@@ -35,23 +40,27 @@ const screens = [
   'BackgroundFetch',
   'BackgroundLocation',
   'Battery',
+  'Branch',
   'Brightness',
   'Calendars',
   'Cellular',
   'Clipboard',
   'Constants',
   'Contacts',
-  'Crypto',
   'Device',
   'DocumentPicker',
   'FaceDetector',
+  'FacebookAppEvents',
+  'FacebookLogin',
   'FileSystem',
+  'FirebaseRecaptcha',
   'Font',
   'Errors',
   'Geocoding',
+  'Google',
+  'GoogleSignIn',
   'Haptics',
   'ImageManipulator',
-  'ImageManipulator (legacy)',
   'ImagePicker',
   'IntentLauncher',
   'KeepAwake',
@@ -61,15 +70,15 @@ const screens = [
   'Location',
   'MailComposer',
   'MediaLibrary',
-  'ModulesCore',
   'Network',
   'NetInfo',
   'Notification',
   'Pedometer',
+  'Permissions',
   'Print',
   'Random',
+  'Recording',
   'SMS',
-  'NavigationBar',
   'SafeAreaContext',
   'ScreenOrientation',
   'SecureStore',
@@ -78,14 +87,17 @@ const screens = [
   'Sharing',
   'StatusBar',
   'StoreReview',
-  'SystemUI',
   'TaskManager',
   'TextToSpeech',
   'TrackingTransparency',
-  'Video Thumbnails',
   'ViewShot',
   'WebBrowser',
 ];
+
+if (Constants.executionEnvironment !== ExecutionEnvironment.StoreClient) {
+  screens.push('InAppPurchases');
+  screens.push('Payments');
+}
 
 export const ScreenItems = screens.map((name) => ({
   name,
@@ -95,12 +107,10 @@ export const ScreenItems = screens.map((name) => ({
 }));
 
 export default function ExpoApisScreen() {
-  return (
-    <ComponentListScreen
-      renderItemRight={({ name }: { name: string }) => (
-        <ExpoAPIIcon name={name} style={{ marginRight: 10, marginLeft: 6 }} />
-      )}
-      apis={ScreenItems}
-    />
+  const renderItemRight = React.useCallback(
+    ({ name }) => <ExpoAPIIcon name={name} style={{ marginRight: 10, marginLeft: 6 }} />,
+    []
   );
+
+  return <ComponentListScreen renderItemRight={renderItemRight} apis={ScreenItems} />;
 }

@@ -50,7 +50,7 @@ function MailComposerView() {
       });
       setStatus(status);
     } catch (error) {
-      console.log('Error: ', error);
+      console.log('Erro: ', error);
       Alert.alert(`Something went wrong: ${error.message}`);
     }
   };

@@ -26,7 +26,7 @@ export function parseAddress({
   return address;
 }
 
-export function parseKey(key: string) {
+export function parseKey(key: Contacts.FieldType) {
   return {
     [Contacts.Fields.ID]: 'ID',
     [Contacts.Fields.ContactType]: 'Contact Type',
@@ -85,6 +85,7 @@ export async function getGroupWithNameAsync(
 export async function cloneAsync(contactId: string) {
   const contact = await Contacts.getContactByIdAsync(contactId);
   if (contact) {
+    // @ts-ignore
     await Contacts.addContactAsync(contact);
   }
 }
@@ -92,7 +93,8 @@ export async function cloneAsync(contactId: string) {
 export async function ensureGroupAsync(groupName: string) {
   const group = await getGroupWithNameAsync(groupName);
   if (!group) {
-    return await Contacts.createGroupAsync(groupName);
+    const groupId = await Contacts.createGroupAsync(groupName);
+    return groupId;
   }
   return group.id;
 }
@@ -101,9 +103,10 @@ export async function deleteGroupWithNameAsync(groupName: string) {
   try {
     const group = await getGroupWithNameAsync(groupName);
     if (group) {
-      await Contacts.removeGroupAsync(group.id!);
+      Contacts.removeGroupAsync(group.id!);
     }
   } catch ({ message }) {
+    // tslint:disable-next-line no-console
     console.error(message);
   }
 }
@@ -114,9 +117,10 @@ export async function removeAllChildrenFromGroupWithNameAsync(groupName: string)
 
     const { data: contacts } = await Contacts.getContactsAsync({ groupId });
     await Promise.all(
-      contacts.map((contact) => Contacts.removeContactFromGroupAsync(contact.id!, groupId!))
+      contacts.map((contact) => Contacts.removeContactFromGroupAsync(contact.id, groupId!))
     );
   } catch ({ message }) {
+    // tslint:disable-next-line no-console
     console.error(message);
   }
 }
@@ -125,7 +129,7 @@ export async function debugAddFirstContactToGroupAsync() {
   const groupId = await ensureGroupAsync('Expo Contacts');
   const { data: contacts } = await Contacts.getContactsAsync({ pageSize: 1 });
   const contact = contacts[0];
-  await Contacts.addExistingContactToGroupAsync(contact.id!, groupId!);
+  Contacts.addExistingContactToGroupAsync(contact.id, groupId!);
 }
 
 export function presentNewContactFormAsync({

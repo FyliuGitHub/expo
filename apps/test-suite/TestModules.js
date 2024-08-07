@@ -13,7 +13,7 @@ function browserSupportsWebGL() {
       !!window.WebGLRenderingContext &&
       (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
     );
-  } catch {
+  } catch (e) {
     return false;
   }
 }
@@ -21,7 +21,7 @@ function browserSupportsWebGL() {
 function optionalRequire(requirer) {
   try {
     return requirer();
-  } catch {
+  } catch (e) {
     // eslint-disable-next-line
     return;
   }
@@ -52,36 +52,45 @@ export function getTestModules() {
     require('./tests/Asset'),
     require('./tests/Constants'),
     require('./tests/FileSystem'),
-    require('./tests/FileSystemNext'),
     require('./tests/Font'),
+    require('./tests/Permissions'),
     require('./tests/ImagePicker'),
-    require('./tests/ModulesCore'),
     optionalRequire(() => require('./tests/Image'))
   );
 
   // Universally tested APIs
   modules.push(
-    require('./tests/EASClient'),
+    require('./tests/Random'),
     require('./tests/Crypto'),
     require('./tests/KeepAwake'),
     require('./tests/Blur'),
     require('./tests/LinearGradient'),
+    require('./tests/Facebook'),
     require('./tests/HTML'),
-    require('./tests/FirebaseJSSDKCompat'),
+    require('./tests/FirebaseCore'),
+    require('./tests/FirebaseAnalytics'),
+    require('./tests/FirebaseRecaptcha'),
     require('./tests/FirebaseJSSDK'),
     require('./tests/ImageManipulator'),
-    require('./tests/Clipboard'),
-    require('./tests/Fetch'),
-    optionalRequire(() => require('./tests/SQLiteLegacy'))
+    optionalRequire(() => require('./tests/SQLite'))
   );
-
-  if (['android', 'ios'].includes(Platform.OS)) {
-    modules.push(require('./tests/SQLite'));
-  }
 
   if (Platform.OS === 'android') {
     modules.push(require('./tests/JSC'));
     modules.push(require('./tests/Hermes'));
+  }
+
+  if (global.DETOX) {
+    modules.push(
+      require('./tests/Contacts'),
+      require('./tests/Haptics'),
+      require('./tests/Localization'),
+      require('./tests/SecureStore'),
+      require('./tests/SMS'),
+      require('./tests/StoreReview'),
+      require('./tests/Notifications')
+    );
+    return modules;
   }
 
   if (Platform.OS === 'web') {
@@ -113,15 +122,26 @@ export function getTestModules() {
     optionalRequire(() => require('./tests/Localization')),
     optionalRequire(() => require('./tests/Network')),
     optionalRequire(() => require('./tests/SecureStore')),
+    optionalRequire(() => require('./tests/Segment')),
     optionalRequire(() => require('./tests/Speech')),
     optionalRequire(() => require('./tests/Recording')),
     optionalRequire(() => require('./tests/ScreenOrientation')),
-    optionalRequire(() => require('./tests/Notifications')),
-    optionalRequire(() => require('./tests/NavigationBar')),
-    optionalRequire(() => require('./tests/SystemUI'))
+    optionalRequire(() => require('./tests/AdMobInterstitial')),
+    optionalRequire(() => require('./tests/AdMobRewarded')),
+    optionalRequire(() => require('./tests/FBBannerAd')),
+    optionalRequire(() => require('./tests/Notifications'))
   );
 
   if (!isDeviceFarm()) {
+    // Times out sometimes
+    modules.push(
+      optionalRequire(() => require('./tests/AdMobPublisherBanner')),
+      optionalRequire(() => require('./tests/AdMobBanner'))
+    );
+    // Invalid placementId in CI (all tests fail)
+    modules.push(optionalRequire(() => require('./tests/FBNativeAd')));
+    // Requires interaction (sign in popup)
+    modules.push(optionalRequire(() => require('./tests/GoogleSignIn')));
     // Popup to request device's location which uses Google's location service
     modules.push(LocationTestScreen);
     // Fails to redirect because of malformed URL in published version with release channel parameter
@@ -141,7 +161,7 @@ export function getTestModules() {
     // Crashes app when mounting component
     modules.push(optionalRequire(() => require('./tests/Video')));
     // "sdkUnversionedTestSuite failed: java.lang.NullPointerException: Attempt to invoke interface method
-    // 'java.util.Map expo.modules.interfaces.taskManager.TaskInterface.getOptions()' on a null object reference"
+    // 'java.util.Map org.unimodules.interfaces.taskManager.TaskInterface.getOptions()' on a null object reference"
     modules.push(TaskManagerTestScreen);
     // Audio tests are flaky in CI due to asynchronous fetching of resources
     modules.push(optionalRequire(() => require('./tests/Audio')));
@@ -155,7 +175,5 @@ export function getTestModules() {
     modules.push(optionalRequire(() => require('./tests/Cellular')));
     modules.push(optionalRequire(() => require('./tests/BarCodeScanner')));
   }
-  return modules
-    .filter(Boolean)
-    .sort((a, b) => (a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1));
+  return modules.filter(Boolean).sort((a, b) => a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1);
 }

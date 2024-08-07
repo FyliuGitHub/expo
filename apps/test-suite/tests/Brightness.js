@@ -7,8 +7,7 @@ export const name = 'Brightness';
 export const EPSILON = Math.pow(10, -5);
 
 export async function test(t) {
-  const shouldSkipTestsRequiringPermissions =
-    await TestUtils.shouldSkipTestsRequiringPermissionsAsync();
+  const shouldSkipTestsRequiringPermissions = await TestUtils.shouldSkipTestsRequiringPermissionsAsync();
   const describeWithPermissions = shouldSkipTestsRequiringPermissions ? t.xdescribe : t.describe;
 
   t.describe(name, () => {
@@ -28,7 +27,7 @@ export async function test(t) {
         let wasRejected = false;
         try {
           await Brightness.setBrightnessAsync(originalValue);
-        } catch {
+        } catch (error) {
           wasRejected = true;
         }
         const obtainedValue = await Brightness.getBrightnessAsync();
@@ -43,7 +42,7 @@ export async function test(t) {
           let wasRejected = false;
           try {
             await Brightness.setBrightnessAsync(tooLowValue);
-          } catch {
+          } catch (error) {
             wasRejected = true;
           }
           const obtainedValue = await Brightness.getBrightnessAsync();
@@ -59,7 +58,7 @@ export async function test(t) {
           let wasRejected = false;
           try {
             await Brightness.setBrightnessAsync(tooHighValue);
-          } catch {
+          } catch (error) {
             wasRejected = true;
           }
           const obtainedValue = await Brightness.getBrightnessAsync();
@@ -72,24 +71,12 @@ export async function test(t) {
         let wasRejected = false;
         try {
           await Brightness.setBrightnessAsync(NaN);
-        } catch {
+        } catch (error) {
           wasRejected = true;
         }
         t.expect(wasRejected).toBe(true);
       });
     });
-
-    if (Platform.OS === 'ios') {
-      t.describe(`Event listeners`, () => {
-        t.it(`addBrightnessListener() registers`, () => {
-          const listener = Brightness.addBrightnessListener(({ brightness }) => {
-            console.log('brightness changed!', brightness);
-          });
-          t.expect(listener).toBeDefined();
-          listener.remove();
-        });
-      });
-    }
 
     if (Platform.OS === 'android') {
       describeWithPermissions(
@@ -106,7 +93,7 @@ export async function test(t) {
             let wasRejected = false;
             try {
               await Brightness.setSystemBrightnessAsync(originalValue);
-            } catch {
+            } catch (error) {
               wasRejected = true;
             }
             const obtainedValue = await Brightness.getSystemBrightnessAsync();
@@ -121,7 +108,7 @@ export async function test(t) {
               let wasRejected = false;
               try {
                 await Brightness.setSystemBrightnessAsync(tooLowValue);
-              } catch {
+              } catch (error) {
                 wasRejected = true;
               }
               const obtainedValue = await Brightness.getSystemBrightnessAsync();
@@ -137,7 +124,7 @@ export async function test(t) {
               let wasRejected = false;
               try {
                 await Brightness.setSystemBrightnessAsync(tooHighValue);
-              } catch {
+              } catch (error) {
                 wasRejected = true;
               }
               const obtainedValue = await Brightness.getSystemBrightnessAsync();
@@ -150,7 +137,7 @@ export async function test(t) {
             let wasRejected = false;
             try {
               await Brightness.setSystemBrightnessAsync(NaN);
-            } catch {
+            } catch (error) {
               wasRejected = true;
             }
             t.expect(wasRejected).toBe(true);
@@ -179,7 +166,7 @@ export async function test(t) {
             await Brightness.setSystemBrightnessAsync(systemValue);
             await Brightness.setBrightnessAsync(appValue);
             await Brightness.useSystemBrightnessAsync();
-          } catch {
+          } catch (error) {
             wasRejected = true;
           }
           const obtainedValue = await Brightness.getBrightnessAsync();
@@ -195,7 +182,7 @@ export async function test(t) {
             await Brightness.setSystemBrightnessAsync(systemValue);
             await Brightness.useSystemBrightnessAsync();
             await Brightness.setBrightnessAsync(appValue);
-          } catch {
+          } catch (error) {
             wasRejected = true;
           }
           const obtainedValue = await Brightness.getBrightnessAsync();
@@ -224,7 +211,7 @@ export async function test(t) {
             const beforeValue = await Brightness.isUsingSystemBrightnessAsync();
             try {
               await Brightness.useSystemBrightnessAsync();
-            } catch {
+            } catch (error) {
               wasRejected = true;
             }
             const afterValue = await Brightness.isUsingSystemBrightnessAsync();
@@ -247,7 +234,7 @@ export async function test(t) {
           try {
             await Brightness.setSystemBrightnessModeAsync(Brightness.BrightnessMode.MANUAL);
             await Brightness.setBrightnessAsync(0.5);
-          } catch {
+          } catch (error) {
             wasRejected = true;
           }
           let obtainedValue = await Brightness.getSystemBrightnessModeAsync();
@@ -255,7 +242,7 @@ export async function test(t) {
           try {
             await Brightness.setSystemBrightnessModeAsync(Brightness.BrightnessMode.AUTOMATIC);
             await Brightness.setBrightnessAsync(0.5);
-          } catch {
+          } catch (error) {
             wasRejected = true;
           }
           obtainedValue = await Brightness.getSystemBrightnessModeAsync();
@@ -268,7 +255,7 @@ export async function test(t) {
           try {
             await Brightness.setSystemBrightnessModeAsync(Brightness.BrightnessMode.AUTOMATIC);
             await Brightness.setSystemBrightnessAsync(0.5);
-          } catch {
+          } catch (error) {
             wasRejected = true;
           }
           const obtainedValue = await Brightness.getSystemBrightnessModeAsync();

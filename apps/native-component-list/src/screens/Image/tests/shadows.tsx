@@ -1,5 +1,5 @@
-import { anyAnimationDriver, jsOnlyAnimationDriver, tintColor } from './constants';
 import { ImageTestGroup, ImageTestPropsFnInput } from '../types';
+import { tintColor } from './constants';
 
 const backgroundColor = '#fff';
 
@@ -8,7 +8,6 @@ const imageTests: ImageTestGroup = {
   tests: [
     {
       name: 'Shadow',
-      animationDriver: jsOnlyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         style: {
           backgroundColor,
@@ -25,7 +24,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Shadow: and border-radius',
-      animationDriver: jsOnlyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         style: {
           backgroundColor,
@@ -43,7 +41,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Shadow: and separate border-radius',
-      animationDriver: anyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         style: {
           backgroundColor,
@@ -64,7 +61,7 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Shadow: Color (iOS only)',
-      props: {
+      props: ({ range }: ImageTestPropsFnInput) => ({
         style: {
           backgroundColor,
           shadowColor: tintColor,
@@ -76,11 +73,10 @@ const imageTests: ImageTestGroup = {
           shadowRadius: 10,
           elevation: 10,
         },
-      },
+      }),
     },
     {
       name: 'Shadow: and no background (gives warning)',
-      animationDriver: jsOnlyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         style: {
           shadowColor: '#000',
@@ -96,7 +92,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Shadow: and transparent background (gives warning)',
-      animationDriver: jsOnlyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         style: {
           backgroundColor: '#00000088',

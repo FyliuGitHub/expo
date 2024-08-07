@@ -2,9 +2,6 @@
 
 echo " ☛  Ensuring Android project is setup..."
 
-CURR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-cd "${CURR_DIR}/.."
-
 if [ -d "./node_modules" ]; then
     echo " ✅ Node modules installed"
 else
@@ -12,11 +9,35 @@ else
     yarn
 fi
 
-"${CURR_DIR}/../../../bin/expotools" android-generate-dynamic-macros --configuration $1 --bare
-echo " ✅ Generete dynamic macros"
+# 1. yarn why react-native : ... Found "react-native@0.62.2" ...
+# 2. grep Found            : Found "react-native@0.62.2"
+# 3. cut -d '@' -f2        : 0.62.2"
+# 4. rev                   : "2.26.0
+# 5. cut -c 2-             : 2.26.0
+# 6. rev                   : 0.62.2
+REACT_NATIVE_VERSION=$(yarn why react-native | grep Found | cut -d '@' -f2 | rev | cut -c 2- | rev)
 
-if [ ! -d "android/app/src/androidTest/assets" ]; then
-  mkdir -p android/app/src/androidTest/assets
+if [ -d "node_modules/react-native/android/com/facebook/react/react-native/$REACT_NATIVE_VERSION" ]; then
+    echo " ✅ React Android is installed"
+else
+    echo " ⚠️  Compiling React Android (~5-10 minutes)..."
+
+    if [ ! -f "../../react-native-lab/react-native/local.properties" ]; then
+        # Copying local.properties to react-native-lab since it may come in handy
+        if [ -f "../../android/local.properties" ]; then
+            cp ../../android/local.properties ../../react-native-lab/react-native
+            echo "   ✅ local.properties copied from Expo client Android project"
+        else
+            echo "   ⚠️  No local.properties found, the build may fail if you have no required (ANDROID_*) env variables set"
+        fi
+    fi
+
+    # Go to our fork of React Native
+    cd ../../react-native-lab/react-native
+    # Build the AARs (~5-10 minutes)
+    ./gradlew :ReactAndroid:installArchives 
+    # Come back to the project
+    cd ../../apps/bare-expo
+
+    echo " ✅ React Android is now installed!"
 fi
-yarn --silent ts-node --print --transpile-only -e 'JSON.stringify(require("./e2e/TestSuite-test.native.js").TESTS, null, 2)' > android/app/src/androidTest/assets/TestSuite.json
-echo " ✅ Generete e2e test cases"

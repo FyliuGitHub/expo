@@ -1,17 +1,17 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+// tslint:disable max-classes-per-file
+import Ionicons from '@expo/vector-icons/build/Ionicons';
 import * as Contacts from 'expo-contacts';
 import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';
 import * as React from 'react';
 import { Platform, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import HeaderIconButton, { HeaderContainerRight } from '../../components/HeaderIconButton';
+import Colors from '../../constants/Colors';
+import usePermissions from '../../utilities/usePermissions';
 import ContactDetailList, { DetailListItem } from './ContactDetailList';
 import * as ContactUtils from './ContactUtils';
 import ContactsAvatar from './ContactsAvatar';
-import HeaderContainerRight from '../../components/HeaderContainerRight';
-import HeaderIconButton from '../../components/HeaderIconButton';
-import Colors from '../../constants/Colors';
-import usePermissions from '../../utilities/usePermissions';
 
 const isIos = Platform.OS === 'ios';
 
@@ -31,21 +31,22 @@ export default function ContactDetailScreen(props: any) {
       headerRight: () => (
         <HeaderContainerRight>
           <HeaderIconButton
-            name="share"
+            name="md-share"
             onPress={async () => {
               Contacts.shareContactAsync(props.route.params.id, 'Call me :]');
             }}
           />
           <HeaderIconButton
-            name="open"
+            name="md-open"
             onPress={async () => {
               await Contacts.presentFormAsync(props.route.params.id);
+              // tslint:disable-next-line no-console
               console.log('the native contact form has been closed');
             }}
           />
           {isIos && (
             <HeaderIconButton
-              name="copy"
+              name="md-copy"
               onPress={async () => {
                 await ContactUtils.cloneAsync(props.route.params.id);
                 props.navigation.goBack();
@@ -91,6 +92,7 @@ function ContactDetailView({
       await Contacts.removeContactAsync(id);
       navigation.goBack();
     } catch ({ message }) {
+      // tslint:disable-next-line no-console
       console.error(message);
     }
   };
@@ -143,7 +145,7 @@ function ContactDetailView({
     for (const key of Object.keys(contact)) {
       const value = (contact as any)[key];
       if (Array.isArray(value) && value.length > 0) {
-        const data: DetailListItem[] = value.map((item) => {
+        const data = value.map((item) => {
           let transform: Partial<DetailListItem> = {};
           switch (key) {
             case Contacts.Fields.Relationships:
@@ -167,7 +169,9 @@ function ContactDetailView({
               transform = {
                 value: item.url,
                 onPress: () => {
-                  const webUrl = item.url.indexOf('://') === -1 ? 'https://' + item.url : item.url;
+                  const webUrl = item.url.indexOf('://') === -1 ? 'http://' + item.url : item.url;
+
+                  // tslint:disable-next-line no-console
                   console.log('open', item.url, webUrl);
                   Linking.openURL(webUrl);
                 },
@@ -193,8 +197,8 @@ function ContactDetailView({
                   onPress: () =>
                     Linking.openURL(
                       Platform.select<string>({
-                        ios: `https://maps.apple.com/maps?daddr=${targetUriAdress}`,
-                        default: `https://maps.google.com/maps?daddr=${targetUriAdress}`,
+                        ios: `http://maps.apple.com/maps?daddr=${targetUriAdress}`,
+                        default: `http://maps.google.com/maps?daddr=${targetUriAdress}`,
                       })
                     ),
                 };
@@ -215,7 +219,7 @@ function ContactDetailView({
           };
         });
         items.push({
-          title: ContactUtils.parseKey(key) ?? 'unknown',
+          title: ContactUtils.parseKey(key),
           data,
         });
       }
@@ -242,6 +246,7 @@ function ContactDetailView({
         [Contacts.Fields.Image]: uri,
       } as any);
     } catch ({ message }) {
+      // tslint:disable-next-line no-console
       console.error(message);
     }
 
@@ -258,8 +263,8 @@ function ContactDetailView({
       aspect: [4, 3],
     });
 
-    if (!result.canceled) {
-      _setNewPhoto(result.assets[0].uri);
+    if (!result.cancelled) {
+      _setNewPhoto(result.uri);
     }
   };
 
@@ -338,7 +343,7 @@ function LinkedButton({
             backgroundColor,
           },
         ]}>
-        <Ionicons name={icon as any} size={20} color={color} />
+        <Ionicons name={`ios-${icon}` as any} size={20} color={color} />
       </View>
       <Text style={[styles.linkButtonText, { color: backgroundColor }]}>{text}</Text>
     </TouchableOpacity>

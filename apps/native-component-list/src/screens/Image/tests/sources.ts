@@ -74,6 +74,7 @@ const imageTests: ImageTestGroup = {
     {
       name: `uri:.ico and intrinsic content size`,
       props: {
+        defaultStyle: {},
         source: images.uri_ico,
       },
     },

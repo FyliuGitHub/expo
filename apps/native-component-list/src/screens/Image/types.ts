@@ -1,36 +1,41 @@
-import { Image, ImageProps } from 'expo-image';
-import React from 'react';
-import { Animated, ImageProps as RNImageProps, Image as RNImage } from 'react-native';
+//import ExpoImage from 'expo-image';
+//import * as React from 'react';
+import { Animated } from 'react-native';
 
-import { anyAnimationDriver, jsOnlyAnimationDriver } from './tests/constants';
+//export type ImageProps = React.ComponentProps<typeof ExpoImage>;
+export type ImageProps = any; // TODO
 
 export type ImageTestEventHandler = (...args: any) => void;
 
 export type ImageTestPropsFnInput = {
-  range: (start: number, end: number) => number | Animated.AnimatedInterpolation<number> | string;
+  range: (start: number, end: number) => number | Animated.AnimatedInterpolation | string;
   event: (name: string) => ImageTestEventHandler;
 };
 
-export type ImageTestProps = any;
+export type ImageTestPropsFn = (input: ImageTestPropsFnInput) => ImageProps;
 
-export type ImageTestPropsFn = (input: ImageTestPropsFnInput) => ImageTestProps;
-
-export type ImageTestComponent =
-  | React.ComponentType<ImageProps>
-  | React.ComponentType<RNImageProps>
-  | Animated.AnimatedComponent<typeof Image>
-  | Animated.AnimatedComponent<typeof RNImage>;
+export type ImageTestProps = ImageProps | ImageTestPropsFn;
 
 export interface ImageTest {
   name: string;
-  props: ImageTestProps | ImageTestPropsFn;
+  props: ImageTestProps;
   loadOnDemand?: boolean;
   testInformation?: string;
-  animationDriver?: typeof jsOnlyAnimationDriver | typeof anyAnimationDriver;
 }
 
 export interface ImageTestGroup {
   name: string;
-  tests: ImageTest[];
+  tests: (ImageTest | ImageTestGroup)[];
   description?: string;
 }
+
+export type Links = {
+  ImageTest: {
+    onRefresh?: () => void;
+    onNext?: () => void;
+    onPrevious?: () => void;
+    test: ImageTest | ImageTestGroup;
+    tests: (ImageTest | ImageTestGroup)[];
+  };
+  ImageTests: { tests: ImageTestGroup };
+};

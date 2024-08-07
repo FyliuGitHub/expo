@@ -5,15 +5,14 @@ import { BarCodeScanner } from 'expo-barcode-scanner';
 import React from 'react';
 import { Platform } from 'react-native';
 
-import { mountAndWaitFor as originalMountAndWaitFor } from './helpers';
 import * as TestUtils from '../TestUtils';
+import { mountAndWaitFor as originalMountAndWaitFor } from './helpers';
 
 export const name = 'BarCodeScanner';
 const style = { width: 200, height: 200 };
 
 export async function test(t, { setPortalChild, cleanupPortal }) {
-  const shouldSkipTestsRequiringPermissions =
-    await TestUtils.shouldSkipTestsRequiringPermissionsAsync();
+  const shouldSkipTestsRequiringPermissions = await TestUtils.shouldSkipTestsRequiringPermissionsAsync();
   const describeWithPermissions = shouldSkipTestsRequiringPermissions ? t.xdescribe : t.describe;
 
   const testPoint = (value, expected, inaccuracy) => {
@@ -39,7 +38,7 @@ export async function test(t, { setPortalChild, cleanupPortal }) {
 
   describeWithPermissions('BarCodeScanner', () => {
     const mountAndWaitFor = (child, propName = 'ref') =>
-      new Promise((resolve) => {
+      new Promise(resolve => {
         const response = originalMountAndWaitFor(child, propName, setPortalChild);
         setTimeout(() => resolve(response), 1500);
       });
@@ -95,8 +94,8 @@ export async function test(t, { setPortalChild, cleanupPortal }) {
               height: 210,
             },
           },
-          2,
-          2
+          1,
+          1
         );
         t.expect(result[0].cornerPoints).toBeDefined();
         t.expect(result[0].cornerPoints.length).toEqual(4);
@@ -168,8 +167,8 @@ export async function test(t, { setPortalChild, cleanupPortal }) {
                 height: 141,
               },
             },
-            2,
-            2
+            1,
+            1
           );
           t.expect(result[0].cornerPoints).toBeDefined();
           t.expect(result[0].cornerPoints.length).toEqual(4);

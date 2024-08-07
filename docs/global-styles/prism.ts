@@ -14,6 +14,7 @@ export const globalPrism = css`
     position: relative;
     padding: 0.2em;
     border-radius: 0.3em;
+    color: color: ${theme.code.property};
     border: 1px solid ${theme.border.default};
     display: inline;
     white-space: normal;
@@ -48,63 +49,56 @@ export const globalPrism = css`
   .token.prolog,
   .token.doctype,
   .token.cdata {
-    color: ${theme.palette.gray10};
+    color: ${theme.code.comment}
   }
 
-  .token.operator,
   .token.punctuation {
-    color: ${theme.palette.gray9};
+    color: ${theme.code.punctuation}
   }
 
-  .token.attr-name,
+  .token.property,
+  .token.tag,
   .token.boolean,
+  .token.number,
   .token.function-name,
   .token.constant,
   .token.symbol,
   .token.deleted {
-    color: ${theme.palette.red11};
+    color: ${theme.code.property}
   }
 
   .token.selector,
+  .token.attr-name,
+  .token.string,
   .token.char,
+  .token.function,
   .token.builtin,
-  .token.script,
   .token.inserted {
-    color: ${theme.palette.green10};
+    color: ${theme.code.builtin}
   }
 
+  .token.operator,
   .token.entity,
+  .token.url,
   .token.variable {
-    color: ${theme.palette.green11};
+    color: ${theme.code.operator}
   }
 
-  .token.keyword {
-    color: ${theme.palette.pink10};
-  }
-
-  .token.property,
   .token.atrule,
   .token.attr-value,
-  .token.function {
-    color: ${theme.palette.purple11};
+  .token.keyword,
+  .token.class-name {
+    color: ${theme.code.keyword}
   }
 
-  .token.class-name,
   .token.regex,
-  .token.important,
-  .token.tag {
-    color: ${theme.palette.orange11};
+  .token.important {
+    color: ${theme.code.regex}
   }
 
-  .token.number,
-  .token.string {
-    color: ${theme.palette.yellow11};
-  }
-
-  .token.url,
-  .token.literal-property,
-  .token.property-access {
-    color: ${theme.palette.blue11};
+  .language-css .token.string,
+  .style .token.string {
+    color: ${theme.code.string}
   }
 
   .token.important {
@@ -137,7 +131,7 @@ export const globalPrism = css`
   .token.tab:not(:empty):before,
   .token.cr:before,
   .token.lf:before {
-    color: ${theme.palette.gray9};
+    color: ${theme.code.before}
   }
 
   pre[class*='language-'].line-numbers {
@@ -163,14 +157,5 @@ export const globalPrism = css`
   }
   pre .line-highlight {
     margin-top: 0;
-  }
-
-  .terminal-snippet {
-    .token.property,
-    .token.atrule,
-    .token.attr-value,
-    .token.function {
-      color: ${theme.palette.pink10};
-    }
   }
 `;

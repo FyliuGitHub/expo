@@ -1,16 +1,15 @@
-import { HeaderBackButton } from '@react-navigation/elements';
-import { createStackNavigator, StackScreenProps } from '@react-navigation/stack';
+import { createStackNavigator, HeaderBackButton, StackScreenProps } from '@react-navigation/stack';
 import Fuse from 'fuse.js';
 import React from 'react';
 import { Animated, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import ComponentListScreen from './ComponentListScreen';
-import { ScreenItems as ApiScreenItems } from './ExpoApisScreen';
-import { ScreenItems as ComponentScreenItems } from './ExpoComponentsScreen';
 import ExpoAPIIcon from '../components/ExpoAPIIcon';
 import SearchBar from '../components/SearchBar';
 import { Colors } from '../constants';
+import ComponentListScreen from './ComponentListScreen';
+import { ScreenItems as ApiScreenItems } from './ExpoApisScreen';
+import { ScreenItems as ComponentScreenItems } from './ExpoComponentsScreen';
 
 const fuse = new Fuse(ApiScreenItems.concat(ComponentScreenItems), { keys: ['name'] });
 
@@ -32,7 +31,7 @@ function Header({
   // @todo: this is static and we don't know if it's visible or not on iOS.
   // need to use a more reliable and cross-platform API when one exists, like
   // LayoutContext. We also don't know if it's translucent or not on Android
-  // and depend on react-native-safe-area-context to tell us.
+  // and depend on react-native-safe-area-view to tell us.
   const STATUSBAR_HEIGHT = top || 8;
 
   return (
@@ -46,7 +45,7 @@ function Header({
           {backButton && (
             <HeaderBackButton
               onPress={() => navigation.goBack()}
-              pressColor={tintColor || '#fff'}
+              pressColorAndroid={tintColor || '#fff'}
               tintColor={tintColor}
             />
           )}
@@ -63,13 +62,11 @@ function SearchScreen({ route }: StackScreenProps<SearchStack, 'search'>) {
   const apis = React.useMemo(() => fuse.search(query).map(({ item }) => item), [query]);
 
   const renderItemRight = React.useCallback(
-    ({ name }: { name: string }) => (
-      <ExpoAPIIcon name={name} style={{ marginRight: 10, marginLeft: 6 }} />
-    ),
+    ({ name }) => <ExpoAPIIcon name={name} style={{ marginRight: 10, marginLeft: 6 }} />,
     []
   );
 
-  return <ComponentListScreen renderItemRight={renderItemRight} apis={apis} sort={false} />;
+  return <ComponentListScreen renderItemRight={renderItemRight} apis={apis} />;
 }
 
 type SearchStack = {

@@ -1,31 +1,41 @@
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
 import {
   Image,
+  StyleProp,
   StyleSheet,
   Text,
   TouchableOpacity,
-  TouchableOpacityProps,
   View,
+  ViewStyle,
 } from 'react-native';
 
 const googleIcon = {
   uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/200px-Google_%22G%22_Logo.svg.png',
 };
 
-type Props = PropsWithChildren<TouchableOpacityProps>;
-
-const GoogleSignInButton = ({ children, style, disabled, ...props }: Props) => (
-  <TouchableOpacity
-    disabled={disabled}
-    activeOpacity={0.6}
-    style={StyleSheet.flatten([styles.touchable, style])}
-    {...props}>
-    <View style={styles.content}>
-      <Image source={googleIcon} style={styles.icon} />
-      <Text style={styles.text}>{children}</Text>
-    </View>
-  </TouchableOpacity>
-);
+export default class GoogleSignInButton extends React.PureComponent<{
+  style?: StyleProp<ViewStyle>;
+  disabled?: boolean;
+}> {
+  static defaultProps = {
+    onPress() {},
+  };
+  render() {
+    const { children, style, disabled, ...props } = this.props;
+    return (
+      <TouchableOpacity
+        disabled={disabled}
+        activeOpacity={0.6}
+        style={StyleSheet.flatten([styles.touchable, style])}
+        {...props}>
+        <View style={styles.content}>
+          <Image source={googleIcon} style={styles.icon} />
+          <Text style={styles.text}>{children}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+}
 
 const styles = StyleSheet.create({
   touchable: {
@@ -47,5 +57,3 @@ const styles = StyleSheet.create({
   icon: { width: 24, aspectRatio: 1 },
   text: { color: 'gray', marginLeft: 12, fontSize: 16, fontWeight: '600' },
 });
-
-export default GoogleSignInButton;

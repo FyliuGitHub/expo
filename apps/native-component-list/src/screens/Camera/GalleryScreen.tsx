@@ -1,6 +1,7 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import MaterialIcons from '@expo/vector-icons/build/MaterialIcons';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
+import * as Permissions from 'expo-permissions';
 import React from 'react';
 import {
   ScrollView,
@@ -67,10 +68,10 @@ class LoadedGalleryScreen extends React.Component<
     const photos = this.state.selected;
 
     if (photos.length > 0) {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
+      const { status } = await Permissions.askAsync(Permissions.MEDIA_LIBRARY);
 
       if (status !== 'granted') {
-        throw new Error('User has denied the MediaLibrary permissions!');
+        throw new Error('Denied MEDIA_LIBRARY permissions!');
       }
 
       const promises = photos.map((photoUri) => {
@@ -81,27 +82,6 @@ class LoadedGalleryScreen extends React.Component<
       alert("Successfully saved photos to user's gallery!");
     } else {
       alert('No photos to save!');
-    }
-  };
-
-  deletePhotos = async () => {
-    const photos = this.state.selected;
-
-    if (photos.length > 0) {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-
-      if (status !== 'granted') {
-        throw new Error('User has denied the MediaLibrary permissions!');
-      }
-
-      const promises = photos.map((photoUri) => {
-        return FileSystem.deleteAsync(photoUri);
-      });
-
-      await Promise.all(promises);
-      this.setState({ selected: [] });
-    } else {
-      alert('No photos to delete!');
     }
   };
 
@@ -124,14 +104,7 @@ class LoadedGalleryScreen extends React.Component<
             <Text style={styles.whiteText}>Save selected to gallery</Text>
           </TouchableOpacity>
         </View>
-        <View style={{ alignItems: 'center' }}>
-          {this.state.selected.length > 0 && (
-            <TouchableOpacity style={styles.button} onPress={this.deletePhotos}>
-              <Text style={styles.redText}>Delete selected photos</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-        <ScrollView>
+        <ScrollView contentContainerStyle={{ flex: 1 }}>
           <View style={styles.pictures}>{this.props.photos.map(this.renderPhoto)}</View>
         </ScrollView>
       </View>
@@ -162,9 +135,5 @@ const styles = StyleSheet.create({
   },
   whiteText: {
     color: 'white',
-  },
-  redText: {
-    color: 'red',
-    fontWeight: '700',
   },
 });

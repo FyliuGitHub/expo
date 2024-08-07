@@ -1,7 +1,5 @@
 import * as Application from 'expo-application';
-import { isDevice } from 'expo-device';
 import { Platform } from 'react-native';
-
 import ExponentTest from '../ExponentTest';
 
 export const name = 'Application';
@@ -32,7 +30,7 @@ export async function test({ describe, it, expect, jasmine }) {
     });
     describe(`Application.getInstallationTimeAsync()`, () => {
       it(`returns a Date object`, async () => {
-        const installationTime = await Application.getInstallationTimeAsync();
+        let installationTime = await Application.getInstallationTimeAsync();
         expect(installationTime).toBeDefined();
         expect(installationTime).toEqual(jasmine.any(Date));
       });
@@ -63,25 +61,16 @@ export async function test({ describe, it, expect, jasmine }) {
       it('Application.getIosPushNotificationServiceEnvironmentAsync() returns a string', async () => {
         const apnsEnvironment = await Application.getIosPushNotificationServiceEnvironmentAsync();
         expect(apnsEnvironment).toBeDefined();
-        if (isDevice) {
-          expect(apnsEnvironment).toEqual(jasmine.any(String));
-        } else {
-          expect(apnsEnvironment).toBeNull();
-        }
+        expect(apnsEnvironment).toEqual(jasmine.any(String));
+      });
+
+      describe(`doesn't get Android-only constants`, () => {
+        it('Application.androidId is null', () => {
+          expect(Application.androidId).toBeNull();
+        });
       });
 
       describe(`doesn't call Android-only methods`, () => {
-        it(`Application.getAndroidId() doesn't get called`, () => {
-          let androidId;
-          let error = null;
-          try {
-            androidId = Application.getAndroidId();
-          } catch (e) {
-            error = e;
-          }
-          expect(error).toBeDefined();
-          expect(androidId).toBeUndefined();
-        });
         it(`Application.getLastUpdateTimeAsync() doesn't get called`, async () => {
           let lastUpdateTime;
           let error = null;
@@ -108,16 +97,11 @@ export async function test({ describe, it, expect, jasmine }) {
     });
   } else if (Platform.OS === 'android') {
     describe(`Android device tests`, () => {
-      it(`Application.getAndroidId() returns String`, () => {
-        let error = null;
-        let androidId;
-        try {
-          androidId = Application.getAndroidId();
-        } catch (e) {
-          error = e;
-        }
+      it(`gets Application.androidId as a String`, () => {
+        let androidId = Application.androidId;
+
+        expect(androidId).toBeDefined();
         expect(androidId).toEqual(jasmine.any(String));
-        expect(error).toBeNull();
       });
 
       if (ExponentTest && !ExponentTest.isInCI) {

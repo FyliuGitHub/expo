@@ -1,52 +1,39 @@
-import { APIDataType } from '~/components/plugins/api/APIDataType';
+import React from 'react';
+
+import { InlineCode } from '~/components/base/code';
+import { B, P } from '~/components/base/paragraph';
+import { H2, H3Code } from '~/components/plugins/Headings';
 import { ConstantDefinitionData } from '~/components/plugins/api/APIDataTypes';
-import { APISectionDeprecationNote } from '~/components/plugins/api/APISectionDeprecationNote';
-import { APISectionPlatformTags } from '~/components/plugins/api/APISectionPlatformTags';
-import {
-  CommentTextBlock,
-  getTagNamesList,
-  STYLES_APIBOX,
-  H3Code,
-} from '~/components/plugins/api/APISectionUtils';
-import { H2, DEMI, P, MONOSPACE } from '~/ui/components/Text';
+import { CommentTextBlock, resolveTypeName } from '~/components/plugins/api/APISectionUtils';
 
 export type APISectionConstantsProps = {
   data: ConstantDefinitionData[];
-  sdkVersion: string;
   apiName?: string;
 };
 
 const renderConstant = (
   { name, comment, type }: ConstantDefinitionData,
-  sdkVersion: string,
   apiName?: string
 ): JSX.Element => (
-  <div key={`constant-definition-${name}`} css={STYLES_APIBOX} className="[&>*:last-child]:!mb-0">
-    <APISectionDeprecationNote comment={comment} sticky />
-    <APISectionPlatformTags comment={comment} />
-    <H3Code tags={getTagNamesList(comment)}>
-      <MONOSPACE weight="medium" className="wrap-anywhere">
+  <div key={`constant-definition-${name}`}>
+    <H3Code>
+      <InlineCode>
         {apiName ? `${apiName}.` : ''}
         {name}
-      </MONOSPACE>
+      </InlineCode>
     </H3Code>
-    {type && (
-      <P>
-        <DEMI theme="secondary">Type:</DEMI>{' '}
-        <APIDataType typeDefinition={type} sdkVersion={sdkVersion} />
-      </P>
-    )}
-    {comment && (
-      <CommentTextBlock comment={comment} includePlatforms={false} beforeContent={<br />} />
-    )}
+    <P>
+      <B>Type:</B> <InlineCode>{resolveTypeName(type)}</InlineCode>
+    </P>
+    <CommentTextBlock comment={comment} />
   </div>
 );
 
-const APISectionConstants = ({ data, sdkVersion, apiName }: APISectionConstantsProps) =>
+const APISectionConstants: React.FC<APISectionConstantsProps> = ({ data, apiName }) =>
   data?.length ? (
     <>
       <H2 key="constants-header">Constants</H2>
-      {data.map(constant => renderConstant(constant, sdkVersion, apiName))}
+      {data.map(constant => renderConstant(constant, apiName))}
     </>
   ) : null;
 

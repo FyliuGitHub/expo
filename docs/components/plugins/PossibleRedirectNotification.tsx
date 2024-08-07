@@ -1,8 +1,9 @@
 import * as React from 'react';
 
-import { A, P } from '~/ui/components/Text';
+import { P } from '~/components/base/paragraph';
+import { CONTAINER_STYLE } from '~/components/plugins/VersionedRedirectNotification';
 
-const PossibleRedirectNotification = ({ newUrl }: React.PropsWithChildren<{ newUrl: string }>) => {
+const PossibleRedirectNotification: React.FC<{ newUrl: string }> = ({ newUrl }) => {
   const [targetId, setTargetId] = React.useState<string | null>(null);
 
   // We could add a listener on `window.onhashchange` but
@@ -17,10 +18,10 @@ const PossibleRedirectNotification = ({ newUrl }: React.PropsWithChildren<{ newU
 
   if (targetId) {
     return (
-      <div className="bg-warning border border-solid border-warning p-4 mt-1 rounded-sm">
-        <P className="mb-0">
+      <div css={CONTAINER_STYLE}>
+        <P>
           ⚠️ The information you are looking for (addressed by <em>"{targetId}"</em>) has moved.{' '}
-          <A href={`${newUrl}#${targetId}`}>Continue to the new location.</A>
+          <a href={`${newUrl}#${targetId}`}>Continue to the new location.</a>
         </P>
       </div>
     );

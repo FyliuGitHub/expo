@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Redirect = ({ path }: React.PropsWithChildren<{ path: string }>) => {
+const Redirect: React.FC<{ path: string }> = ({ path }) => {
   React.useEffect(() => {
     setTimeout(() => {
       window.location.href = path;

@@ -1,12 +1,12 @@
 import mux from '@expo/mux';
-import { setStringAsync } from 'expo-clipboard';
+import Constants from 'expo-constants';
+import getInstallationIdAsync from 'expo/build/environment/getInstallationIdAsync';
 import React from 'react';
-import { Button, NativeModules, StyleSheet, Text, View } from 'react-native';
+import { NativeModules, StyleSheet, Text, View } from 'react-native';
+import { v4 as uuidV4 } from 'uuid';
 
-// A workaround for `TypeError: Cannot read property 'now' of undefined` error thrown from reanimated code.
-global.performance = {
-  now: () => 0,
-};
+const logUrl = Constants.manifest.logUrl;
+const sessionId = uuidV4();
 
 const { ExpoNativeModuleIntrospection } = NativeModules;
 
@@ -16,59 +16,11 @@ if (!ExpoNativeModuleIntrospection) {
   );
 }
 
-const keysOrder = ['type', 'functionType', 'name', 'argumentsCount', 'key'];
-
-function isNumeric(str) {
-  if (typeof str !== 'string') {
-    return false; // we only process strings!
-  }
-  return (
-    !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
-    !isNaN(parseFloat(str))
-  ); // ...and ensure strings of whitespace fail
-}
-
-const replacer = (_key, value) => {
-  if (value instanceof Object && !(value instanceof Array)) {
-    return Object.keys(value)
-      .sort(function (a, b) {
-        if (keysOrder.indexOf(a) !== -1 || keysOrder.indexOf(b) !== -1) {
-          return (
-            (keysOrder.includes(a) ? keysOrder.indexOf(a) : Infinity) -
-            (keysOrder.includes(b) ? keysOrder.indexOf(b) : Infinity)
-          );
-        } else {
-          return a.localeCompare(b);
-        }
-      })
-      .reduce((sorted, key) => {
-        sorted[key] = value[key];
-        return sorted;
-      }, {});
-  }
-  if (value instanceof Array) {
-    // sorts by numeric keys eg. { name: 'isAvailableAsync', argumentsCount: 0, key: 0 },
-    if (value?.[0]?.key && isNumeric(value?.[0]?.key)) {
-      return value.sort((a, b) => Number(a?.key) > Number(b?.key));
-    }
-    // sorts by string keys  eg. { name: 'getNetworkStateAsync', argumentsCount: 0, key: 'getNetworkStateAsync' },
-    if (value?.[0]?.key) {
-      return value.sort((a, b) => a?.key?.localeCompare?.(b?.key));
-    }
-    // sort other arrays
-    return value?.sort((a, b) => a?.localeCompare?.(b)) ?? value;
-  }
-  return value;
-};
-
 export default class App extends React.Component {
-  state = {};
-
   async componentDidMount() {
     const moduleSpecs = await _getExpoModuleSpecsAsync();
-    const code = `module.exports = ${JSON.stringify(moduleSpecs, replacer)};`;
-    await setStringAsync(code);
-    this.setState({ moduleSpecs: code });
+    const code = `module.exports = ${JSON.stringify(moduleSpecs)};`;
+
     const message = `
 
 ------------------------------COPY THE TEXT BELOW------------------------------
@@ -77,35 +29,55 @@ ${code}
 
 ------------------------------END OF TEXT TO COPY------------------------------
 
-THE TEXT WAS ALSO COPIED TO YOUR CLIPBOARD
-
 `;
-    console.log(message);
+    await _sendRawLogAsync(message, logUrl);
   }
 
   render() {
     return (
       <View style={styles.container}>
-        <Text style={{ fontWeight: '700' }}>
-          Your new jest mocks should now be:{'\n'}- In your clipboard{'\n'}- In your development
-          console.{'\n\n'}
-          Copy either one of the <Text style={{ backgroundColor: '#eee' }}>
-            module.exports
-          </Text>{' '}
-          line into <Text style={{ backgroundColor: '#eee' }}>jest-expo/src/expoModules.js</Text>{' '}
-          and format it nicely with prettier.
+        <Text>
+          Check your console and copy the relevant logs into jest-expo/src/expoModules.js and format
+          it nicely with prettier
         </Text>
-        <Button onPress={() => setStringAsync(this.state.moduleSpecs)} title="Copy to clipboard" />
       </View>
     );
   }
 }
 
-const whitelist = /^(Expo(?:nent)?|AIR|CTK|Lottie|Reanimated|RN|NativeUnimoduleProxy)(?![a-z])/;
-const blacklist = ['ExpoCrypto', 'ExpoClipboard'];
+/**
+ * Sends a log message without truncating it.
+ */
+async function _sendRawLogAsync(message, logUrl) {
+  const headers = {
+    'Content-Type': 'application/json',
+    Connection: 'keep-alive',
+    'Proxy-Connection': 'keep-alive',
+    Accept: 'application/json',
+    'Device-Id': await getInstallationIdAsync(),
+    'Session-Id': sessionId,
+  };
+  if (Constants.deviceName) {
+    headers['Device-Name'] = Constants.deviceName;
+  }
+  await fetch(logUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify([
+      {
+        count: 0,
+        level: 'info',
+        body: [message],
+        includesStack: false,
+      },
+    ]),
+  });
+}
+
 async function _getExpoModuleSpecsAsync() {
+  const whitelist = /^(Expo(?:nent)?|AIR|CTK|Lottie|Reanimated|RN|NativeUnimoduleProxy)(?![a-z])/;
   const moduleNames = await ExpoNativeModuleIntrospection.getNativeModuleNamesAsync();
-  const expoModuleNames = moduleNames.filter((moduleName) => whitelist.test(moduleName)).sort();
+  const expoModuleNames = moduleNames.filter(moduleName => whitelist.test(moduleName)).sort();
   const specPromises = {};
   for (const moduleName of expoModuleNames) {
     specPromises[moduleName] = _getModuleSpecAsync(moduleName, NativeModules[moduleName]);
@@ -118,17 +90,16 @@ async function _getModuleSpecAsync(moduleName, module) {
     return {};
   }
 
-  const moduleDescription =
-    await ExpoNativeModuleIntrospection.introspectNativeModuleAsync(moduleName);
+  const moduleDescription = await ExpoNativeModuleIntrospection.introspectNativeModuleAsync(
+    moduleName
+  );
   const spec = _addFunctionTypes(_mockify(module), moduleDescription.methods);
   if (moduleName === 'NativeUnimoduleProxy') {
-    spec.exportedMethods.mock = _sortObjectAndBlacklistKeys(module.exportedMethods, blacklist);
-    spec.viewManagersMetadata.mock = module.viewManagersMetadata;
+    spec.exportedMethods.mock = _sortObject(module.exportedMethods);
+    spec.viewManagersNames.mock = module.viewManagersNames.sort();
     spec.modulesConstants.type = 'mock';
-
     spec.modulesConstants.mockDefinition = Object.keys(module.modulesConstants)
       .sort()
-      .filter((name) => !blacklist.includes(name))
       .reduce(
         (spec, moduleName) => ({
           ...spec,
@@ -166,10 +137,9 @@ const _addFunctionTypes = (spec, methods) =>
       spec
     );
 
-const _sortObjectAndBlacklistKeys = (obj, blacklist) =>
+const _sortObject = obj =>
   Object.keys(obj)
     .sort()
-    .filter((k) => !blacklist.includes(k))
     .reduce(
       (acc, el) => ({
         ...acc,

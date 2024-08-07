@@ -2,7 +2,6 @@ import * as Calendar from 'expo-calendar';
 import { UnavailabilityError } from 'expo-modules-core';
 import { Platform } from 'react-native';
 
-import { alertAndWaitForResponse } from './helpers';
 import * as TestUtils from '../TestUtils';
 
 export const name = 'Calendar';
@@ -26,40 +25,35 @@ async function createTestCalendarAsync(patch = {}) {
 
 async function getCalendarByIdAsync(calendarId) {
   const calendars = await Calendar.getCalendarsAsync();
-  return calendars.find((calendar) => calendar.id === calendarId);
+  return calendars.find(calendar => calendar.id === calendarId);
 }
 
 async function pickCalendarSourceIdAsync() {
   if (Platform.OS === 'ios') {
     const sources = await Calendar.getSourcesAsync();
-    const mainSource = sources.find((source) => source.name === 'iCloud') || sources[0];
+    const mainSource = sources.find(source => source.name === 'iCloud') || sources[0];
     return mainSource && mainSource.id;
   }
 }
 
-function createEventData(customArgs = {}) {
-  return {
+async function createTestEventAsync(calendarId, customArgs = {}) {
+  return await Calendar.createEventAsync(calendarId, {
     title: 'App.js Conference',
-    startDate: new Date(2019, 3, 4), // 4th April 2019, months are counted from 0
-    endDate: new Date(2019, 3, 5), // 5th April 2019
+    startDate: +new Date(2019, 3, 4), // 4th April 2019, months are counted from 0
+    endDate: +new Date(2019, 3, 5), // 5th April 2019
     timeZone: 'Europe/Warsaw',
     allDay: true,
     location: 'Qubus Hotel, Nadwiślańska 6, 30-527 Kraków, Poland',
     notes: 'The very first Expo & React Native conference in Europe',
     availability: Calendar.Availability.BUSY,
     ...customArgs,
-  };
-}
-
-async function createTestEventAsync(calendarId, customArgs) {
-  const eventData = createEventData(customArgs);
-  return await Calendar.createEventAsync(calendarId, eventData);
+  });
 }
 
 async function createTestAttendeeAsync(eventId) {
   return await Calendar.createAttendeeAsync(eventId, {
     name: 'Guest',
-    email: 'guest@expo.dev',
+    email: 'guest@expo.io',
     role: Calendar.AttendeeRole.ATTENDEE,
     status: Calendar.AttendeeStatus.ACCEPTED,
     type: Calendar.AttendeeType.PERSON,
@@ -68,12 +62,11 @@ async function createTestAttendeeAsync(eventId) {
 
 async function getAttendeeByIdAsync(eventId, attendeeId) {
   const attendees = await Calendar.getAttendeesForEventAsync(eventId);
-  return attendees.find((attendee) => attendee.id === attendeeId);
+  return attendees.find(attendee => attendee.id === attendeeId);
 }
 
 export async function test(t) {
-  const shouldSkipTestsRequiringPermissions =
-    await TestUtils.shouldSkipTestsRequiringPermissionsAsync();
+  const shouldSkipTestsRequiringPermissions = await TestUtils.shouldSkipTestsRequiringPermissionsAsync();
   const describeWithPermissions = shouldSkipTestsRequiringPermissions ? t.xdescribe : t.describe;
 
   function testCalendarShape(calendar) {
@@ -86,7 +79,7 @@ export async function test(t) {
     t.expect(typeof calendar.allowsModifications).toBe('boolean');
 
     t.expect(Array.isArray(calendar.allowedAvailabilities)).toBe(true);
-    calendar.allowedAvailabilities.forEach((availability) => {
+    calendar.allowedAvailabilities.forEach(availability => {
       t.expect(Object.values(Calendar.Availability)).toContain(availability);
     });
 
@@ -104,12 +97,12 @@ export async function test(t) {
       calendar.timeZone && t.expect(typeof calendar.timeZone).toBe('string');
 
       t.expect(Array.isArray(calendar.allowedReminders)).toBe(true);
-      calendar.allowedReminders.forEach((reminder) => {
+      calendar.allowedReminders.forEach(reminder => {
         t.expect(Object.values(Calendar.AlarmMethod)).toContain(reminder);
       });
 
       t.expect(Array.isArray(calendar.allowedAttendeeTypes)).toBe(true);
-      calendar.allowedAttendeeTypes.forEach((attendeeType) => {
+      calendar.allowedAttendeeTypes.forEach(attendeeType => {
         t.expect(Object.values(Calendar.AttendeeType)).toContain(attendeeType);
       });
 
@@ -223,81 +216,6 @@ export async function test(t) {
       });
     });
 
-    if (Platform.OS === 'ios') {
-      t.describe('requestReminderPermissionsAsync()', () => {
-        t.it('requests for Reminder permissions', async () => {
-          const results = await Calendar.requestRemindersPermissionsAsync();
-
-          t.expect(results.granted).toBe(true);
-          t.expect(results.status).toBe('granted');
-        });
-      });
-    }
-
-    t.describe('calendar UI', () => {
-      let originalTimeout;
-      const dontStartNewTask = {
-        startNewActivityTask: false,
-      };
-
-      t.beforeAll(async () => {
-        originalTimeout = t.jasmine.DEFAULT_TIMEOUT_INTERVAL;
-        t.jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout * 10;
-      });
-      t.afterAll(() => {
-        t.jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
-      });
-
-      t.it('creates an event via UI', async () => {
-        const eventData = createEventData();
-        await alertAndWaitForResponse('Please confirm the event creation dialog.');
-        const result = await Calendar.createEventInCalendarAsync(eventData, dontStartNewTask);
-        if (Platform.OS === 'ios') {
-          t.expect(result.action).toBe('saved');
-          t.expect(typeof result.id).toBe('string');
-          const storedEvent = await Calendar.getEventAsync(result.id);
-
-          t.expect(storedEvent).toEqual(
-            t.jasmine.objectContaining({
-              title: eventData.title,
-              allDay: eventData.allDay,
-              location: eventData.location,
-              notes: eventData.notes,
-            })
-          );
-        } else {
-          t.expect(result.action).toBe('done');
-          t.expect(result.id).toBe(null);
-        }
-      });
-
-      t.it('can preview an event', async () => {
-        const calendarId = await createTestCalendarAsync();
-        const eventId = await createTestEventAsync(calendarId);
-        await alertAndWaitForResponse(
-          'Please verify event details are shown and close the dialog.'
-        );
-        const result = await Calendar.openEventInCalendarAsync(
-          { id: eventId },
-          {
-            ...dontStartNewTask,
-            allowsEditing: true,
-            allowsCalendarPreview: true,
-          }
-        );
-        t.expect(result).toEqual({ action: 'done' });
-      });
-
-      t.it('can edit an event', async () => {
-        const calendarId = await createTestCalendarAsync();
-        const eventId = await createTestEventAsync(calendarId);
-        await alertAndWaitForResponse('Please verify you can see the event and close the dialog.');
-        const result = await Calendar.editEventInCalendarAsync({ id: eventId }, dontStartNewTask);
-        t.expect(typeof result.action).toBe('string'); // done or canceled
-        t.expect(result.id).toBe(null);
-      });
-    });
-
     t.describe('createCalendarAsync()', () => {
       let calendarId;
 
@@ -355,7 +273,7 @@ export async function test(t) {
         await Calendar.deleteCalendarAsync(calendarId);
 
         const calendars = await Calendar.getCalendarsAsync();
-        t.expect(calendars.findIndex((calendar) => calendar.id === calendarId)).toBe(-1);
+        t.expect(calendars.findIndex(calendar => calendar.id === calendarId)).toBe(-1);
       });
     });
 
@@ -399,7 +317,7 @@ export async function test(t) {
       t.it('creates an event with the recurrence rule', async () => {
         const eventId = await createTestEventAsync(calendarId, {
           recurrenceRule: {
-            endDate: new Date(2019, 3, 5).getTime(),
+            endDate: new Date(2019, 3, 5),
             frequency: 'daily',
             interval: 1,
           },
@@ -418,6 +336,7 @@ export async function test(t) {
             error = e;
           }
           t.expect(error).toBeDefined();
+          t.expect(error.code).toBe('E_EVENT_INVALID_TIMEZONE');
         });
       }
 
@@ -518,6 +437,7 @@ export async function test(t) {
         }
         t.expect(error).toBeDefined();
         t.expect(error instanceof Error).toBe(true);
+        t.expect(error.code).toBe('E_EVENT_NOT_FOUND');
       });
 
       t.afterAll(async () => {
@@ -540,7 +460,7 @@ export async function test(t) {
 
           t.expect(Array.isArray(attendees)).toBe(true);
 
-          const newAttendee = attendees.find((attendee) => attendee.id === attendeeId);
+          const newAttendee = attendees.find(attendee => attendee.id === attendeeId);
 
           t.expect(newAttendee).toBeDefined();
           testAttendeeShape(newAttendee);

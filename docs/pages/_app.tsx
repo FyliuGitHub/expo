@@ -1,84 +1,74 @@
-import { css, Global } from '@emotion/react';
 import { ThemeProvider } from '@expo/styleguide';
-import { MDXProvider } from '@mdx-js/react';
-import * as Sentry from '@sentry/react';
-import { AppProps } from 'next/app';
-import { Inter, Fira_Code } from 'next/font/google';
+import * as Sentry from '@sentry/browser';
+import { AppProps, NextWebVitalsMetric } from 'next/app';
+import dynamic from 'next/dynamic';
+import Head from 'next/head';
+import React, { useState, useEffect } from 'react';
 
+import { TrackPageView } from '~/common/analytics';
 import { preprocessSentryError } from '~/common/sentry-utilities';
-import { useNProgress } from '~/common/use-nprogress';
-import DocumentationElements from '~/components/page-higher-order/DocumentationElements';
-import { AnalyticsProvider } from '~/providers/Analytics';
-import { CodeBlockSettingsProvider } from '~/providers/CodeBlockSettingsProvider';
-import { TutorialChapterCompletionProvider } from '~/providers/TutorialChapterCompletionProvider';
-import { markdownComponents } from '~/ui/components/Markdown';
-import * as Tooltip from '~/ui/components/Tooltip';
-
-import 'global-styles/global.css';
+import 'react-diff-view/style/index.css';
 import '@expo/styleguide/dist/expo-theme.css';
-import '@expo/styleguide-search-ui/dist/expo-search-ui.css';
 import 'tippy.js/dist/tippy.css';
-
-const isDev = process.env.NODE_ENV === 'development';
-
-export const regularFont = Inter({
-  display: 'swap',
-  subsets: ['latin'],
-});
-export const monospaceFont = Fira_Code({
-  weight: ['400', '500'],
-  display: 'swap',
-  subsets: ['latin'],
-});
+import '../public/static/libs/algolia/algolia.css';
+import '../public/static/libs/algolia/algolia-mobile.css';
 
 Sentry.init({
-  dsn: 'https://1a2f5c8cec574bcea3971b74f91504d6@o30871.ingest.sentry.io/1526800',
+  dsn: 'https://67e35a01698649d5aa33aaab61777851@sentry.io/1526800',
   beforeSend: preprocessSentryError,
-  environment: isDev ? 'development' : 'production',
-  denyUrls: isDev
-    ? undefined
-    : [
-        /https:\/\/docs-expo-dev\.translate\.goog/,
-        /https:\/\/translated\.turbopages\.org/,
-        /https:\/\/docs\.expo\.dev\/index\.html/,
-        /https:\/\/expo\.nodejs\.cn/,
-      ],
-  integrations: [Sentry.browserTracingIntegration()],
-  tracesSampleRate: 0.001,
 });
 
-const rootMarkdownComponents = {
-  ...markdownComponents,
-  wrapper: DocumentationElements,
-};
+const DynamicLoadAnalytics = dynamic<{ id: string }>(() =>
+  import('~/common/analytics').then(mod => mod.LoadAnalytics)
+);
 
-export { reportWebVitals } from '~/providers/Analytics';
+export function reportWebVitals({ id, name, label, value }: NextWebVitalsMetric) {
+  window?.gtag?.('event', name, {
+    event_category: label === 'web-vital' ? 'Web Vitals' : 'Next.js custom metric',
+    // Google Analytics metrics must be integers, so the value is rounded.
+    // For CLS the value is first multiplied by 1000 for greater precision
+    // (note: increase the multiplier for greater precision if needed).
+    value: Math.round(name === 'CLS' ? value * 1000 : value),
+    // The `id` value will be unique to the current page load. When sending
+    // multiple values from the same page (e.g. for CLS), Google Analytics can
+    // compute a total by grouping on this ID (note: requires `eventLabel` to
+    // be a dimension in your report).
+    event_label: id,
+    // Use a non-interaction event to avoid affecting bounce rate.
+    non_interaction: true,
+  });
+}
 
-export default function App({ Component, pageProps }: AppProps) {
-  useNProgress();
+function App({ Component, pageProps }: AppProps) {
+  const googleAnalyticsId = 'UA-107832480-3';
+  const [shouldLoadAnalytics, setShouldLoadAnalytics] = useState(false);
+
+  useEffect(() => {
+    setShouldLoadAnalytics(true);
+  }, []);
+
   return (
-    <AnalyticsProvider>
+    <>
+      <Head>
+        <script
+          type="text/javascript"
+          dangerouslySetInnerHTML={{
+            __html: `
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${googleAnalyticsId}', { 'transport_type': 'beacon' });
+              `,
+          }}
+        />
+      </Head>
+      {shouldLoadAnalytics && <DynamicLoadAnalytics id={googleAnalyticsId} />}
       <ThemeProvider>
-        <TutorialChapterCompletionProvider>
-          <CodeBlockSettingsProvider>
-            <MDXProvider components={rootMarkdownComponents}>
-              <Tooltip.Provider>
-                <Global
-                  styles={css({
-                    'html, body, kbd, button, input, select': {
-                      fontFamily: regularFont.style.fontFamily,
-                    },
-                    'code, pre, table.diff': {
-                      fontFamily: monospaceFont.style.fontFamily,
-                    },
-                  })}
-                />
-                <Component {...pageProps} />
-              </Tooltip.Provider>
-            </MDXProvider>
-          </CodeBlockSettingsProvider>
-        </TutorialChapterCompletionProvider>
+        <Component {...pageProps} />
       </ThemeProvider>
-    </AnalyticsProvider>
+      <TrackPageView id={googleAnalyticsId} />
+    </>
   );
 }
+
+export default App;

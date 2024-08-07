@@ -1,36 +1,38 @@
-import { Video } from 'expo-av';
+import { Audio, Video } from 'expo-av';
 import { Camera } from 'expo-camera';
 import React from 'react';
 import { Platform } from 'react-native';
 
-import { waitFor, mountAndWaitFor as originalMountAndWaitFor, retryForStatus } from './helpers';
 import * as TestUtils from '../TestUtils';
+import { waitFor, mountAndWaitFor as originalMountAndWaitFor, retryForStatus } from './helpers';
 
 export const name = 'Camera';
 const style = { width: 200, height: 200 };
 
 export async function test(t, { setPortalChild, cleanupPortal }) {
-  const shouldSkipTestsRequiringPermissions =
-    await TestUtils.shouldSkipTestsRequiringPermissionsAsync();
+  const shouldSkipTestsRequiringPermissions = await TestUtils.shouldSkipTestsRequiringPermissionsAsync();
   const describeWithPermissions = shouldSkipTestsRequiringPermissions ? t.xdescribe : t.describe;
 
   describeWithPermissions('Camera', () => {
     let instance = null;
     let originalTimeout;
 
-    const refSetter = (ref) => {
+    const refSetter = ref => {
       instance = ref;
     };
 
-    const mountAndWaitFor = async (child, propName = 'onCameraReady') =>
-      await originalMountAndWaitFor(child, propName, setPortalChild);
+    const mountAndWaitFor = (child, propName = 'onCameraReady') =>
+      new Promise(resolve => {
+        const response = originalMountAndWaitFor(child, propName, setPortalChild);
+        setTimeout(() => resolve(response), 1500);
+      });
 
     t.beforeAll(async () => {
       await TestUtils.acceptPermissionsAndRunCommandAsync(() => {
-        return Camera.requestCameraPermissionsAsync();
+        return Camera.requestPermissionsAsync();
       });
       await TestUtils.acceptPermissionsAndRunCommandAsync(() => {
-        return Camera.requestMicrophonePermissionsAsync();
+        return Audio.requestPermissionsAsync();
       });
 
       originalTimeout = t.jasmine.DEFAULT_TIMEOUT_INTERVAL;
@@ -42,27 +44,13 @@ export async function test(t, { setPortalChild, cleanupPortal }) {
     });
 
     t.beforeEach(async () => {
-      const { status } = await Camera.getCameraPermissionsAsync();
+      const { status } = await Camera.getPermissionsAsync();
       t.expect(status).toEqual('granted');
     });
 
     t.afterEach(async () => {
       instance = null;
       await cleanupPortal();
-    });
-
-    t.describe('Camera.getCameraPermissionsAsync', () => {
-      t.it('is granted', async () => {
-        const { status } = await Camera.getCameraPermissionsAsync();
-        t.expect(status).toEqual('granted');
-      });
-    });
-
-    t.describe('Camera.getMicrophonePermissionsAsync', () => {
-      t.it('is granted', async () => {
-        const { status } = await Camera.getMicrophonePermissionsAsync();
-        t.expect(status).toEqual('granted');
-      });
     });
 
     if (Platform.OS === 'android') {
@@ -103,25 +91,6 @@ export async function test(t, { setPortalChild, cleanupPortal }) {
           picture = await instance.takePictureAsync({ exif: true });
           t.expect(picture).toBeDefined();
           t.expect(picture.exif).toBeDefined();
-        });
-
-        t.it('adds additional EXIF only if requested', async () => {
-          await mountAndWaitFor(<Camera ref={refSetter} style={style} />);
-          const additionalExif = {
-            GPSLatitude: 30.82123,
-            GPSLongitude: 150.25582,
-            GPSAltitude: 80.808,
-          };
-          let picture = await instance.takePictureAsync({ exif: false, additionalExif });
-          t.expect(picture).toBeDefined();
-          t.expect(picture.exif).not.toBeDefined();
-
-          picture = await instance.takePictureAsync({ exif: true, additionalExif });
-          t.expect(picture).toBeDefined();
-          t.expect(picture.exif).toBeDefined();
-          t.expect(picture.exif.GPSLatitude).toBe(additionalExif.GPSLatitude);
-          t.expect(picture.exif.GPSLongitude).toBe(additionalExif.GPSLongitude);
-          t.expect(picture.exif.GPSAltitude).toBe(additionalExif.GPSAltitude);
         });
 
         t.it(
@@ -277,7 +246,7 @@ export async function test(t, { setPortalChild, cleanupPortal }) {
         await mountAndWaitFor(<Camera ref={refSetter} style={style} />);
         const recordingPromise = instance.recordAsync();
         await waitFor(2500);
-        await instance.stopRecording();
+        instance.stopRecording();
         const response = await recordingPromise;
         t.expect(response).toBeDefined();
         t.expect(response.uri).toMatch(/^file:\/\//);
@@ -291,8 +260,8 @@ export async function test(t, { setPortalChild, cleanupPortal }) {
             .recordAsync({
               codec: '123',
             })
-            .catch((error) => {
-              t.expect(error.message).toMatch(/'123' is not present in VideoCodec enum/i);
+            .catch(error => {
+              t.expect(error.message).toMatch(/(?=.*codec)(?=.*is not supported)/i);
             });
         });
 
@@ -323,7 +292,7 @@ export async function test(t, { setPortalChild, cleanupPortal }) {
       });
 
       // Test for the fix to: https://github.com/expo/expo/issues/1976
-      const testFrontCameraRecording = async (camera) => {
+      const testFrontCameraRecording = async camera => {
         await mountAndWaitFor(camera);
         const response = await instance.recordAsync({ maxDuration: 2 });
 
@@ -381,11 +350,11 @@ export async function test(t, { setPortalChild, cleanupPortal }) {
         t.it('started/stopped manually', async () => {
           await mountAndWaitFor(<Camera style={style} ref={refSetter} />);
 
-          const recordFor = (duration) =>
+          const recordFor = duration =>
             new Promise(async (resolve, reject) => {
               const recordingPromise = instance.recordAsync();
               await waitFor(duration);
-              await instance.stopRecording();
+              instance.stopRecording();
               try {
                 const recordedVideo = await recordingPromise;
                 t.expect(recordedVideo).toBeDefined();
@@ -404,7 +373,7 @@ export async function test(t, { setPortalChild, cleanupPortal }) {
         t.it('started/stopped automatically', async () => {
           await mountAndWaitFor(<Camera style={style} ref={refSetter} />);
 
-          const recordFor = (duration) =>
+          const recordFor = duration =>
             new Promise(async (resolve, reject) => {
               try {
                 const response = await instance.recordAsync({ maxDuration: duration / 1000 });

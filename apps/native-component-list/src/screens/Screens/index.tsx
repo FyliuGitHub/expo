@@ -1,3 +1,5 @@
+// @ts-nocheck
+// tslint:disable max-classes-per-file
 import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
 import React from 'react';
 import { FlatList, StyleSheet, Text, TouchableHighlight, View } from 'react-native';
@@ -21,7 +23,7 @@ class MainScreen extends React.Component<Props> {
     title: '📱 React Native Screens Examples',
   };
   render() {
-    const data = Object.keys(SCREENS);
+    const data = Object.keys(SCREENS) as (keyof Links)[];
     return (
       <FlatList
         style={styles.list}
@@ -31,7 +33,6 @@ class MainScreen extends React.Component<Props> {
         renderItem={(props) => (
           <MainScreenItem
             item={props.item}
-            // @ts-ignore
             onPressItem={(key) => this.props.navigation.navigate(key)}
           />
         )}
@@ -63,11 +64,10 @@ const Stack = createStackNavigator();
 const SwitchStack = createStackNavigator();
 
 const ExampleApp = () => (
-  <SwitchStack.Navigator initialRouteName="Main" screenOptions={{ headerShown: false }}>
+  <SwitchStack.Navigator initialRouteName="Main" headerMode="none">
     <SwitchStack.Screen name="Main">
       {() => (
         <Stack.Navigator>
-          {/* @ts-ignore */}
           <Stack.Screen name="MainScreen" component={MainScreen} />
         </Stack.Navigator>
       )}

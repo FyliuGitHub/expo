@@ -1,5 +1,5 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import FontAwesome from '@expo/vector-icons/build/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/build/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -177,6 +177,7 @@ function BackgroundLocationMapView() {
 
       if (!state.isTracking) {
         alert(
+          // tslint:disable-next-line max-line-length
           'Now you can send app to the background, go somewhere and come back here! You can even terminate the app and it will be woken up when the new significant location change comes out.'
         );
       }
@@ -399,7 +400,7 @@ async function getSavedLocations() {
   try {
     const item = await AsyncStorage.getItem(STORAGE_KEY);
     return item ? JSON.parse(item) : [];
-  } catch {
+  } catch (e) {
     return [];
   }
 }
@@ -412,6 +413,7 @@ TaskManager.defineTask(LOCATION_UPDATES_TASK, async ({ data: { locations } }: an
       longitude: coords.longitude,
     }));
 
+    // tslint:disable-next-line no-console
     console.log(`Received new locations at ${new Date()}:`, locations);
 
     savedLocations.push(...newLocations);

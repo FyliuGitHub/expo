@@ -10,22 +10,15 @@ import {
   Text,
   View,
 } from 'react-native';
-import Reanimated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { Colors } from '../constants';
 
 const COUNT = 5;
 const ITEM_SIZE = Dimensions.get('window').width / COUNT;
-const PERSPECTIVE = 200;
 
-interface Position {
-  x: number;
-  y: number;
-}
-
-interface BallProps {
-  index: number;
-  position: Position;
+interface Props {
+  numItems: number;
+  perspective: number;
 }
 
 function useLockedScreenOrientation() {
@@ -37,13 +30,20 @@ function useLockedScreenOrientation() {
   }, []);
 }
 
-export default function AccelerometerScreen() {
+export default function AccelerometerScreen({ numItems = COUNT, perspective = 200 }: Props) {
   useLockedScreenOrientation();
 
-  const [position, setPosition] = React.useState<Position>({ x: 0, y: 0 });
+  const [items, setItems] = React.useState<any[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const [isSetup, setSetup] = React.useState<boolean>(false);
-  const [shouldUseReanimated, setShouldUseReanimated] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    const items = [];
+    for (let i = 0; i < numItems; i++) {
+      items.push({ position: new Animated.ValueXY() });
+    }
+    setItems(items);
+  }, [numItems]);
 
   React.useEffect(() => {
     (async () => {
@@ -66,14 +66,23 @@ export default function AccelerometerScreen() {
     if (!isSetup) return;
 
     const sub = Accelerometer.addListener(({ x, y }) => {
-      setPosition({ x, y });
+      // console.log('event');
+      items.forEach((_, index) => {
+        // All that matters is that the values are the same on iOS, Android, Web, ect...
+        const nIndex = index + 1;
+
+        Animated.spring(items[index].position, {
+          toValue: {
+            x: (Number(x.toFixed(1)) * perspective * nIndex) / COUNT,
+            y: (-y.toFixed(1) * perspective * nIndex) / COUNT,
+          },
+          useNativeDriver: false,
+          friction: 7,
+        }).start();
+      });
     });
     return () => sub.remove();
   }, [isSetup]);
-
-  const switchComponent = React.useCallback(() => {
-    setShouldUseReanimated(!shouldUseReanimated);
-  }, [shouldUseReanimated]);
 
   if (error) {
     return (
@@ -118,84 +127,30 @@ export default function AccelerometerScreen() {
 
   return (
     <Container>
-      <Text style={styles.text}>
+      <Text style={[styles.text, styles.message]}>
         {`The stack should move against the orientation of the device.
           If you lift the bottom of the phone up, the stack should translate down towards the bottom of the screen.
           The balls all line up when the phone is in "display up" mode.`}
       </Text>
-      <Container>
-        {Array(COUNT)
-          .fill(null)
-          .map((_, index) => {
-            const props = { key: `ball-${index}`, index, position };
-            if (shouldUseReanimated) {
-              return <ReanimatedBall {...props} />;
-            } else {
-              return <AnimatedBall {...props} />;
-            }
-          })}
-      </Container>
-      <View style={styles.switchComponentButton}>
-        <Button
-          title={`Switch to ${shouldUseReanimated ? 'Animated' : 'Reanimated'}`}
-          onPress={switchComponent}
-        />
-      </View>
+      {items.map((val, index) => {
+        return (
+          <Animated.View
+            key={`item-${index}`}
+            style={[
+              styles.ball,
+              {
+                opacity: (index + 1) / COUNT,
+                transform: [
+                  { translateX: items[index].position.x },
+                  { translateY: items[index].position.y },
+                ],
+              },
+            ]}
+          />
+        );
+      })}
     </Container>
   );
-}
-
-function AnimatedBall({ index, position }: BallProps) {
-  const translate = React.useMemo(
-    () =>
-      new Animated.ValueXY({
-        x: position.x,
-        y: position.y,
-      }),
-    []
-  );
-
-  const animatedStyle = {
-    opacity: (index + 1) / COUNT,
-    transform: [{ translateX: translate.x }, { translateY: translate.y }],
-  };
-
-  React.useEffect(() => {
-    Animated.spring(translate, {
-      toValue: calculateTranslateValue(index, position),
-      useNativeDriver: false,
-      friction: 7,
-    }).start();
-  }, [index, position.x, position.y]);
-
-  return <Animated.View style={[styles.ball, animatedStyle]} />;
-}
-
-function ReanimatedBall({ index, position }: BallProps) {
-  const translate = useSharedValue({
-    x: position.x,
-    y: position.y,
-  });
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: (index + 1) / COUNT,
-      transform: [{ translateX: translate.value.x }, { translateY: translate.value.y }],
-    };
-  }, [index]);
-
-  React.useEffect(() => {
-    translate.value = withSpring(calculateTranslateValue(index, position));
-  }, [index, position.x, position.y]);
-
-  return <Reanimated.View style={[styles.ball, animatedStyle]} />;
-}
-
-function calculateTranslateValue(index: number, position: any): any {
-  return {
-    x: (Number(position.x.toFixed(1)) * PERSPECTIVE * (index + 1)) / COUNT,
-    y: (-position.y.toFixed(1) * PERSPECTIVE * (index + 1)) / COUNT,
-  };
 }
 
 AccelerometerScreen.navigationOptions = {
@@ -211,11 +166,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   text: {
-    padding: 24,
     zIndex: 1,
     fontWeight: '800',
     color: Colors.tintColor,
     textAlign: 'center',
+  },
+  message: {
+    position: 'absolute',
+    top: 24,
+    left: 24,
+    right: 24,
   },
   ball: {
     position: 'absolute',
@@ -223,8 +183,5 @@ const styles = StyleSheet.create({
     height: ITEM_SIZE,
     borderRadius: ITEM_SIZE,
     backgroundColor: 'red',
-  },
-  switchComponentButton: {
-    margin: 24,
   },
 });

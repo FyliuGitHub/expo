@@ -7,8 +7,8 @@ export default function useAppState(
   const [state, setState] = useState<AppStateStatus | null>(initialState);
 
   useEffect(() => {
-    const appStateSubscription = AppState.addEventListener('change', setState);
-    return () => appStateSubscription.remove();
+    AppState.addEventListener('change', setState);
+    return () => AppState.removeEventListener('change', setState);
   }, []);
 
   return state;

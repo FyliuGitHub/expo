@@ -1,44 +1,42 @@
-import { useMemo } from 'react';
+import React from 'react';
 
 import { IOSPermission, iosPermissions, PermissionReference } from './data';
 
-import { Cell, HeaderCell, Row, Table, TableHead } from '~/ui/components/Table';
-import { P, CODE, createPermalinkedComponent } from '~/ui/components/Text';
+import Permalink from '~/components/Permalink';
+import { InlineCode } from '~/components/base/code';
 
 type IOSPermissionsProps = {
   permissions: PermissionReference<IOSPermission>[];
 };
 
-const PermissionPermalink = createPermalinkedComponent(P, {
-  baseNestingLevel: 4,
-  iconSize: 'xs',
-  className: 'inline-flex items-center',
-});
-
 export function IOSPermissions(props: IOSPermissionsProps) {
-  const list = useMemo(() => getPermissions(props.permissions), [props.permissions]);
+  const list = React.useMemo(() => getPermissions(props.permissions), [props.permissions]);
 
   return (
-    <Table>
-      <TableHead>
-        <Row>
-          <HeaderCell>Info.plist Key</HeaderCell>
-          <HeaderCell>Description</HeaderCell>
-        </Row>
-      </TableHead>
+    <table>
+      <thead>
+        <tr>
+          <th>Info.plist Key</th>
+          <th>Description</th>
+        </tr>
+      </thead>
       <tbody>
         {list.map(permission => (
-          <Row key={permission.name}>
-            <Cell>
-              <PermissionPermalink id={`permission-${permission.name.toLowerCase()}`}>
-                <CODE>{permission.name}</CODE>
-              </PermissionPermalink>
-            </Cell>
-            <Cell>{permission.description}</Cell>
-          </Row>
+          <tr key={permission.name}>
+            <td>
+              <Permalink id={`permission-${permission.name.toLowerCase()}`}>
+                <span>
+                  <InlineCode>{permission.name}</InlineCode>
+                </span>
+              </Permalink>
+            </td>
+            <td>
+              <p>{permission.description}</p>
+            </td>
+          </tr>
         ))}
       </tbody>
-    </Table>
+    </table>
   );
 }
 

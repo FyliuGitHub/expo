@@ -3,15 +3,13 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import * as Contacts from 'expo-contacts';
 import { Platform } from 'expo-modules-core';
 import React from 'react';
-import { RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 
-import * as ContactUtils from './ContactUtils';
-import ContactsList from './ContactsList';
-import HeaderContainerRight from '../../components/HeaderContainerRight';
-import HeaderIconButton from '../../components/HeaderIconButton';
-import MonoText from '../../components/MonoText';
+import HeaderIconButton, { HeaderContainerRight } from '../../components/HeaderIconButton';
 import usePermissions from '../../utilities/usePermissions';
 import { useResolvedValue } from '../../utilities/useResolvedValue';
+import * as ContactUtils from './ContactUtils';
+import ContactsList from './ContactsList';
 
 type StackParams = {
   ContactDetail: { id: string };
@@ -31,7 +29,7 @@ export default function ContactsScreen({ navigation }: Props) {
         <HeaderContainerRight>
           <HeaderIconButton
             disabled={Platform.select({ web: true, default: false })}
-            name="add"
+            name="md-add"
             onPress={() => {
               const randomContact = { note: 'Likes expo...' } as Contacts.Contact;
               ContactUtils.presentNewContactFormAsync({ contact: randomContact });
@@ -77,7 +75,6 @@ function ContactsView({ navigation }: Props) {
   const [contacts, setContacts] = React.useState<Contacts.Contact[]>([]);
   const [hasNextPage, setHasNextPage] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
-  const [selectedContact, setSelectedContact] = React.useState<Contacts.Contact | null>(null);
 
   const onPressItem = React.useCallback(
     (id: string) => {
@@ -110,7 +107,7 @@ function ContactsView({ navigation }: Props) {
     }
 
     for (const contact of nextContacts) {
-      rawContacts[contact.id!] = contact;
+      rawContacts[contact.id] = contact;
     }
     setContacts(Object.values(rawContacts));
     setHasNextPage(payload.hasNextPage);
@@ -124,31 +121,15 @@ function ContactsView({ navigation }: Props) {
   useFocusEffect(onFocus);
 
   return (
-    <>
-      <ContactsList
-        onEndReachedThreshold={-1.5}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => loadAsync({}, true)} />
-        }
-        data={contacts}
-        onPressItem={onPressItem}
-        onEndReached={loadAsync}
-        ListHeaderComponent={() => (
-          <>
-            <TouchableOpacity
-              onPress={async () => {
-                const contact = await Contacts.presentContactPickerAsync();
-
-                setSelectedContact(contact);
-              }}>
-              <Text>Select a contact</Text>
-            </TouchableOpacity>
-
-            {selectedContact && <MonoText>{JSON.stringify(selectedContact, null, 2)}</MonoText>}
-          </>
-        )}
-      />
-    </>
+    <ContactsList
+      onEndReachedThreshold={-1.5}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={() => loadAsync({}, true)} />
+      }
+      data={contacts}
+      onPressItem={onPressItem}
+      onEndReached={loadAsync}
+    />
   );
 }
 

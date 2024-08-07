@@ -1,8 +1,8 @@
-import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from 'expo-av';
+import { Audio } from 'expo-av';
 import { Platform } from 'react-native';
 
-import { retryForStatus, waitFor } from './helpers';
 import * as TestUtils from '../TestUtils';
+import { retryForStatus, waitFor } from './helpers';
 
 export const name = 'Recording';
 
@@ -11,16 +11,16 @@ const defaultRecordingDurationMillis = 500;
 const amrSettings = {
   android: {
     extension: '.amr',
-    outputFormat: Audio.AndroidOutputFormat.AMR_NB,
-    audioEncoder: Audio.AndroidAudioEncoder.AMR_NB,
+    outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_AMR_NB,
+    audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AMR_NB,
     sampleRate: 8000,
     numberOfChannels: 1,
     bitRate: 128000,
   },
   ios: {
     extension: '.amr',
-    outputFormat: Audio.IOSOutputFormat.AMR,
-    audioQuality: Audio.IOSAudioQuality.HIGH,
+    outputFormat: Audio.RECORDING_OPTION_IOS_OUTPUT_FORMAT_AMR,
+    audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
     sampleRate: 8000,
     numberOfChannels: 1,
     bitRate: 128000,
@@ -46,8 +46,7 @@ const amrSettings = {
 // > Source: https://developer.android.com/reference/android/media/MediaRecorder.html#stop()
 
 export async function test(t) {
-  const shouldSkipTestsRequiringPermissions =
-    await TestUtils.shouldSkipTestsRequiringPermissionsAsync();
+  const shouldSkipTestsRequiringPermissions = await TestUtils.shouldSkipTestsRequiringPermissionsAsync();
   const describeWithPermissions = shouldSkipTestsRequiringPermissions ? t.xdescribe : t.describe;
 
   describeWithPermissions('Recording', () => {
@@ -58,8 +57,8 @@ export async function test(t) {
         playsInSilentModeIOS: true,
         staysActiveInBackground: true,
         playThroughEarpieceAndroid: false,
-        interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-        interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+        interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_MIX_WITH_OTHERS,
+        interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DUCK_OTHERS,
       });
 
       await TestUtils.acceptPermissionsAndRunCommandAsync(() => {
@@ -90,11 +89,11 @@ export async function test(t) {
       });
 
       t.it('sets high preset successfully', async () => {
-        await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+        await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
       });
 
       t.it('sets low preset successfully', async () => {
-        await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+        await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY);
       });
 
       t.it('sets custom preset successfully', async () => {
@@ -106,8 +105,8 @@ export async function test(t) {
         await recordingObject.prepareToRecordAsync({
           android: {
             extension: '.aac',
-            audioEncoder: Audio.AndroidAudioEncoder.AAC,
-            outputFormat: Audio.AndroidOutputFormat.AAC_ADIF,
+            audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
+            outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_AAC_ADIF,
             ...commonOptions,
           },
           ios: {
@@ -115,8 +114,8 @@ export async function test(t) {
             linearPCMBitDepth: 8,
             linearPCMIsFloat: false,
             linearPCMIsBigEndian: false,
-            outputFormat: Audio.IOSOutputFormat.ULAW,
-            audioQuality: Audio.IOSAudioQuality.MEDIUM,
+            outputFormat: Audio.RECORDING_OPTION_IOS_OUTPUT_FORMAT_ULAW,
+            audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_MEDIUM,
             ...commonOptions,
           },
         });
@@ -128,7 +127,7 @@ export async function test(t) {
     // t.describe('Recording.isPreparedToRecord()', () => {
     //   t.beforeEach(
     //     async () =>
-    //       await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY)
+    //       await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY)
     //   );
     //   t.afterEach(async () => await recordingObject.stopAndUnloadAsync());
 
@@ -146,7 +145,7 @@ export async function test(t) {
         t.expect(onRecordingStatusUpdate).toHaveBeenCalledWith(
           t.jasmine.objectContaining({ canRecord: false })
         );
-        await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+        await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY);
         t.expect(onRecordingStatusUpdate).toHaveBeenCalledWith(
           t.jasmine.objectContaining({ canRecord: true })
         );
@@ -161,7 +160,7 @@ export async function test(t) {
         t.expect(onRecordingStatusUpdate).toHaveBeenCalledWith(
           t.jasmine.objectContaining({ canRecord: false })
         );
-        await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+        await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY);
         t.expect(onRecordingStatusUpdate).toHaveBeenCalledWith(
           t.jasmine.objectContaining({ canRecord: true })
         );
@@ -180,7 +179,7 @@ export async function test(t) {
       t.it('sets frequence of the progress updates', async () => {
         const onRecordingStatusUpdate = t.jasmine.createSpy('onRecordingStatusUpdate');
         recordingObject.setOnRecordingStatusUpdate(onRecordingStatusUpdate);
-        await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+        await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY);
         await recordingObject.startAsync();
         const updateInterval = 50;
         recordingObject.setProgressUpdateInterval(updateInterval);
@@ -205,52 +204,6 @@ export async function test(t) {
       });
     });*/
 
-    t.describe('Recording.getAvailableInputs()', () => {
-      t.afterEach(async () => {
-        await recordingObject.startAsync();
-        await waitFor(defaultRecordingDurationMillis);
-        await recordingObject.stopAndUnloadAsync();
-      });
-
-      t.it('returns a list of available recording inputs', async () => {
-        await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
-
-        const inputs = await recordingObject.getAvailableInputs();
-        t.expect(inputs.length).toBeGreaterThan(0);
-      });
-    });
-
-    t.describe('Recording.getCurrentInput()', () => {
-      t.afterEach(async () => {
-        await recordingObject.startAsync();
-        await waitFor(defaultRecordingDurationMillis);
-        await recordingObject.stopAndUnloadAsync();
-      });
-      t.it('returns the currently-selected recording input', async () => {
-        await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
-
-        const input = await recordingObject.getCurrentInput();
-        t.expect(input).toBeDefined();
-      });
-    });
-
-    t.describe('Recording.setInput()', () => {
-      t.afterEach(async () => {
-        await recordingObject.startAsync();
-        await waitFor(defaultRecordingDurationMillis);
-        await recordingObject.stopAndUnloadAsync();
-      });
-      t.it('sets the recording input', async () => {
-        await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
-
-        const inputs = await recordingObject.getAvailableInputs();
-        const initialInput = inputs[0];
-        await recordingObject.setInput(initialInput.uid);
-        const currentInput = await recordingObject.getCurrentInput();
-        t.expect(currentInput.uid).toEqual(initialInput.uid);
-      });
-    });
-
     t.describe('Recording.startAsync()', () => {
       t.afterEach(async () => {
         await waitFor(defaultRecordingDurationMillis);
@@ -258,14 +211,14 @@ export async function test(t) {
       });
 
       t.it('starts a clean recording', async () => {
-        await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+        await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY);
         await recordingObject.startAsync();
         await retryForStatus(recordingObject, { isRecording: true });
       });
 
       if (pausingIsSupported) {
         t.it('starts a paused recording', async () => {
-          await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+          await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY);
           await recordingObject.startAsync();
           await retryForStatus(recordingObject, { isRecording: true });
           await recordingObject.pauseAsync();
@@ -279,7 +232,7 @@ export async function test(t) {
     if (pausingIsSupported) {
       t.describe('Recording.pauseAsync()', () => {
         t.it('pauses the recording', async () => {
-          await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+          await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY);
           await recordingObject.startAsync();
           await retryForStatus(recordingObject, { isRecording: true });
           await waitFor(defaultRecordingDurationMillis);
@@ -296,7 +249,7 @@ export async function test(t) {
       });
 
       t.it('returns a string once the recording is prepared', async () => {
-        await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+        await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY);
         await recordingObject.startAsync();
         await waitFor(defaultRecordingDurationMillis);
         if (Platform.OS === 'web') {
@@ -339,7 +292,7 @@ export async function test(t) {
 
       if (Platform.OS !== 'android') {
         t.it('fails if called before the recording is started', async () => {
-          await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+          await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY);
           let error = null;
           try {
             await recordingObject.createNewLoadedSound();
@@ -352,7 +305,7 @@ export async function test(t) {
       }
 
       t.it('fails if called before the recording is recording', async () => {
-        await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+        await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY);
         await recordingObject.startAsync();
         await waitFor(defaultRecordingDurationMillis);
         let error = null;
@@ -366,11 +319,11 @@ export async function test(t) {
       });
 
       t.it('returns a sound object once the recording is done', async () => {
-        await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+        await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY);
         await recordingObject.startAsync();
 
         const recordingDuration = defaultRecordingDurationMillis;
-        await new Promise((resolve) => {
+        await new Promise(resolve => {
           setTimeout(async () => {
             await recordingObject.stopAndUnloadAsync();
             let error = null;
@@ -400,7 +353,7 @@ export async function test(t) {
           await recordingObject.startAsync();
 
           const recordingDuration = defaultRecordingDurationMillis;
-          await new Promise((resolve) => {
+          await new Promise(resolve => {
             setTimeout(async () => {
               await recordingObject.stopAndUnloadAsync();
               let error = null;
@@ -431,7 +384,7 @@ export async function test(t) {
 
       if (Platform.OS !== 'android') {
         t.it('fails if called before the recording is started', async () => {
-          await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+          await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY);
           let error = null;
           try {
             await recordingObject.createNewLoadedSoundAsync();
@@ -444,7 +397,7 @@ export async function test(t) {
       }
 
       t.it('fails if called before the recording is recording', async () => {
-        await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+        await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY);
         await recordingObject.startAsync();
         await waitFor(defaultRecordingDurationMillis);
         let error = null;
@@ -458,11 +411,11 @@ export async function test(t) {
       });
 
       t.it('returns a sound object once the recording is done', async () => {
-        await recordingObject.prepareToRecordAsync(Audio.RecordingOptionsPresets.LOW_QUALITY);
+        await recordingObject.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY);
         await recordingObject.startAsync();
 
         const recordingDuration = defaultRecordingDurationMillis;
-        await new Promise((resolve) => {
+        await new Promise(resolve => {
           setTimeout(async () => {
             await recordingObject.stopAndUnloadAsync();
             let error = null;
@@ -493,7 +446,7 @@ export async function test(t) {
           await recordingObject.startAsync();
 
           const recordingDuration = defaultRecordingDurationMillis;
-          await new Promise((resolve) => {
+          await new Promise(resolve => {
             setTimeout(async () => {
               await recordingObject.stopAndUnloadAsync();
               let error = null;
@@ -519,7 +472,7 @@ export async function test(t) {
 
       t.it('creates and starts recording', async () => {
         const { recording } = await Audio.Recording.createAsync(
-          Audio.RecordingOptionsPresets.LOW_QUALITY
+          Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY
         );
         recordingObject = recording;
         await retryForStatus(recordingObject, { isRecording: true });

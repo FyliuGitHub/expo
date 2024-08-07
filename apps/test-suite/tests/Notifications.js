@@ -7,15 +7,14 @@ import { Platform } from 'expo-modules-core';
 import * as Notifications from 'expo-notifications';
 import { Alert, AppState } from 'react-native';
 
-import { waitFor } from './helpers';
 import * as TestUtils from '../TestUtils';
 import { isInteractive } from '../utils/Environment';
+import { waitFor } from './helpers';
 
 export const name = 'Notifications';
 
 export async function test(t) {
-  const shouldSkipTestsRequiringPermissions =
-    await TestUtils.shouldSkipTestsRequiringPermissionsAsync();
+  const shouldSkipTestsRequiringPermissions = await TestUtils.shouldSkipTestsRequiringPermissionsAsync();
   const describeWithPermissions = shouldSkipTestsRequiringPermissions ? t.xdescribe : t.describe;
 
   t.describe('Notifications', () => {
@@ -25,7 +24,7 @@ export async function test(t) {
       let tokenFromMethodCall = null;
 
       t.beforeAll(() => {
-        subscription = Notifications.addPushTokenListener((newEvent) => {
+        subscription = Notifications.addPushTokenListener(newEvent => {
           tokenFromEvent = newEvent;
         });
       });
@@ -132,7 +131,7 @@ export async function test(t) {
         expoPushToken = pushToken.data;
 
         Notifications.setNotificationHandler({
-          handleNotification: async (notification) => {
+          handleNotification: async notification => {
             notificationToHandle = notification;
             if (handleFuncOverride) {
               return await handleFuncOverride(notification);
@@ -144,7 +143,7 @@ export async function test(t) {
               };
             }
           },
-          handleSuccess: (event) => {
+          handleSuccess: event => {
             handleSuccessEvent = event;
           },
           handleError: (...event) => {
@@ -152,7 +151,7 @@ export async function test(t) {
           },
         });
 
-        receivedSubscription = Notifications.addNotificationReceivedListener((event) => {
+        receivedSubscription = Notifications.addNotificationReceivedListener(event => {
           receivedEvent = event;
         });
       });
@@ -304,7 +303,7 @@ export async function test(t) {
 
       t.it('presents a notification with attachments', async () => {
         const fileUri = FileSystem.documentDirectory + 'expo-notifications-test-image.jpg';
-        await FileSystem.downloadAsync('https://placekitten.com/200/300', fileUri);
+        await FileSystem.downloadAsync('http://placekitten.com/200/300', fileUri);
         await Notifications.presentNotificationAsync({
           title: 'Look at that kitten! ➡️',
           body: 'What a cutie!',
@@ -324,8 +323,9 @@ export async function test(t) {
 
       t.describe('getNotificationChannelAsync()', () => {
         t.it('returns null if there is no such channel', async () => {
-          const channel =
-            await Notifications.getNotificationChannelAsync('non-existent-channel-id');
+          const channel = await Notifications.getNotificationChannelAsync(
+            'non-existent-channel-id'
+          );
           t.expect(channel).toBe(null);
         });
 
@@ -396,7 +396,7 @@ export async function test(t) {
               showBadge: false,
               sound: null,
               audioAttributes: {
-                usage: Notifications.AndroidAudioUsage.NOTIFICATION,
+                usage: Notifications.AndroidAudioUsage.NOTIFICATION_COMMUNICATION_INSTANT,
                 contentType: Notifications.AndroidAudioContentType.SONIFICATION,
                 flags: {
                   enforceAudibility: true,
@@ -495,8 +495,9 @@ export async function test(t) {
               testChannelGroupId,
               testChannelGroup
             );
-            const channel =
-              await Notifications.getNotificationChannelGroupAsync(testChannelGroupId);
+            const channel = await Notifications.getNotificationChannelGroupAsync(
+              testChannelGroupId
+            );
             await Notifications.deleteNotificationChannelGroupAsync(testChannelGroupId);
             t.expect(channel).toBeDefined();
           });
@@ -663,7 +664,7 @@ export async function test(t) {
         });
 
         t.afterEach(async () => {
-          allTestCategoryIds.forEach(async (id) => {
+          allTestCategoryIds.forEach(async id => {
             await Notifications.deleteNotificationCategoryAsync(id);
           });
         });
@@ -693,7 +694,7 @@ export async function test(t) {
 
       t.describe('setNotificationCategoriesAsync()', () => {
         t.afterEach(async () => {
-          allTestCategoryIds.forEach(async (id) => {
+          allTestCategoryIds.forEach(async id => {
             await Notifications.deleteNotificationCategoryAsync(id);
           });
         });
@@ -740,7 +741,7 @@ export async function test(t) {
 
       t.describe('deleteNotificationCategoriesAsync()', () => {
         t.afterEach(async () => {
-          allTestCategoryIds.forEach(async (id) => {
+          allTestCategoryIds.forEach(async id => {
             await Notifications.deleteNotificationCategoryAsync(id);
           });
         });
@@ -824,7 +825,7 @@ export async function test(t) {
           handleNotification: async () => ({
             shouldShowAlert: true,
           }),
-          handleSuccess: (notificationId) => {
+          handleSuccess: notificationId => {
             notificationStatuses[notificationId] = true;
           },
         });
@@ -974,8 +975,9 @@ export async function test(t) {
         'triggers a notification which emits an event',
         async () => {
           const notificationReceivedSpy = t.jasmine.createSpy('notificationReceived');
-          const subscription =
-            Notifications.addNotificationReceivedListener(notificationReceivedSpy);
+          const subscription = Notifications.addNotificationReceivedListener(
+            notificationReceivedSpy
+          );
           await Notifications.scheduleNotificationAsync({
             identifier,
             content: notification,
@@ -1028,8 +1030,9 @@ export async function test(t) {
         'triggers a notification which contains the custom color',
         async () => {
           const notificationReceivedSpy = t.jasmine.createSpy('notificationReceived');
-          const subscription =
-            Notifications.addNotificationReceivedListener(notificationReceivedSpy);
+          const subscription = Notifications.addNotificationReceivedListener(
+            notificationReceivedSpy
+          );
           await Notifications.scheduleNotificationAsync({
             identifier,
             content: notification,
@@ -1059,7 +1062,7 @@ export async function test(t) {
         async () => {
           let notificationFromEvent = undefined;
           Notifications.setNotificationHandler({
-            handleNotification: async (event) => {
+            handleNotification: async event => {
               notificationFromEvent = event;
               return {
                 shouldShowAlert: true,
@@ -1083,7 +1086,7 @@ export async function test(t) {
         async () => {
           let notificationFromEvent = undefined;
           Notifications.setNotificationHandler({
-            handleNotification: async (event) => {
+            handleNotification: async event => {
               notificationFromEvent = event;
               return {
                 shouldShowAlert: true,
@@ -1120,7 +1123,7 @@ export async function test(t) {
         async () => {
           let notificationFromEvent = undefined;
           Notifications.setNotificationHandler({
-            handleNotification: async (event) => {
+            handleNotification: async event => {
               notificationFromEvent = event;
               return {
                 shouldShowAlert: true,
@@ -1157,7 +1160,7 @@ export async function test(t) {
         async () => {
           let notificationFromEvent = undefined;
           Notifications.setNotificationHandler({
-            handleNotification: async (event) => {
+            handleNotification: async event => {
               notificationFromEvent = event;
               return {
                 shouldShowAlert: true,
@@ -1339,8 +1342,9 @@ export async function test(t) {
           'schedules a notification with calendar trigger',
           async () => {
             const notificationReceivedSpy = t.jasmine.createSpy('notificationReceived');
-            const subscription =
-              Notifications.addNotificationReceivedListener(notificationReceivedSpy);
+            const subscription = Notifications.addNotificationReceivedListener(
+              notificationReceivedSpy
+            );
             await Notifications.scheduleNotificationAsync({
               identifier,
               content: notification,
@@ -1436,8 +1440,9 @@ export async function test(t) {
         'makes a scheduled notification not trigger',
         async () => {
           const notificationReceivedSpy = t.jasmine.createSpy('notificationReceived');
-          const subscription =
-            Notifications.addNotificationReceivedListener(notificationReceivedSpy);
+          const subscription = Notifications.addNotificationReceivedListener(
+            notificationReceivedSpy
+          );
           await Notifications.scheduleNotificationAsync({
             identifier,
             content: notification,
@@ -1459,8 +1464,9 @@ export async function test(t) {
         'removes all scheduled notifications',
         async () => {
           const notificationReceivedSpy = t.jasmine.createSpy('notificationReceived');
-          const subscription =
-            Notifications.addNotificationReceivedListener(notificationReceivedSpy);
+          const subscription = Notifications.addNotificationReceivedListener(
+            notificationReceivedSpy
+          );
           for (let i = 0; i < 3; i += 1) {
             await Notifications.scheduleNotificationAsync({
               identifier: `notification-${i}`,
@@ -1523,7 +1529,6 @@ export async function test(t) {
             let notificationSent = false;
             Alert.alert(`Please move the app to the background and wait for 5 seconds`);
             let userInteractionTimeout = null;
-            let subscription = null;
             async function handleStateChange(state) {
               const identifier = 'test-interactive-notification';
               if (state === 'background' && !notificationSent) {
@@ -1548,10 +1553,7 @@ export async function test(t) {
                 t.expect(handleSuccessSpy).not.toHaveBeenCalled();
                 t.expect(handleErrorSpy).not.toHaveBeenCalledWith(identifier);
                 t.expect(notificationReceivedSpy).not.toHaveBeenCalled();
-                if (subscription != null) {
-                  subscription.remove();
-                  subscription = null;
-                }
+                AppState.removeEventListener('change', handleStateChange);
                 resolve();
               }
             }
@@ -1559,17 +1561,14 @@ export async function test(t) {
               console.warn(
                 "Scheduled notification test was skipped and marked as successful. It required user interaction which hasn't occured in time."
               );
-              if (subscription != null) {
-                subscription.remove();
-                subscription = null;
-              }
+              AppState.removeEventListener('change', handleStateChange);
               Alert.alert(
                 'Scheduled notification test was skipped',
                 `The test required user interaction which hasn't occurred in time (${secondsToTimeout} seconds). It has been marked as passing. Better luck next time!`
               );
               resolve();
             }, secondsToTimeout * 1000);
-            subscription = AppState.addEventListener('change', handleStateChange);
+            AppState.addEventListener('change', handleStateChange);
           }),
         30000
       );
@@ -1585,7 +1584,7 @@ export async function test(t) {
             shouldShowAlert: true,
           }),
         });
-        subscription = Notifications.addNotificationResponseReceivedListener((anEvent) => {
+        subscription = Notifications.addNotificationResponseReceivedListener(anEvent => {
           event = anEvent;
         });
       });
@@ -1832,7 +1831,7 @@ export async function test(t) {
 // In this test app we contact the Expo push service directly. You *never*
 // should do this in a real app. You should always store the push tokens on your
 // own server or use the local notification API if you want to notify this user.
-const PUSH_ENDPOINT = 'https://exp.host/--/api/v2/push/send';
+const PUSH_ENDPOINT = 'https://expo.io/--/api/v2/push/send';
 
 async function sendTestPushNotification(expoPushToken, notificationOverrides) {
   // POST the token to the Expo push server

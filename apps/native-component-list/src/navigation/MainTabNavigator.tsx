@@ -1,15 +1,35 @@
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import {
+  createDrawerNavigator,
+  DrawerContentComponentProps,
+  DrawerContentOptions,
+  DrawerContentScrollView,
+  DrawerItemList,
+} from '@react-navigation/drawer';
 import * as React from 'react';
-import { Platform, StyleSheet, useWindowDimensions } from 'react-native';
+import { Platform, ScrollViewProps, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Colors } from '../constants';
 import Screens from './MainNavigators';
 import createTabNavigator from './createTabNavigator';
-import { Colors } from '../constants';
 
 const Tab = createTabNavigator();
 
 const Drawer = createDrawerNavigator();
+
+function CustomDrawerContent({
+  hideLabels,
+  ...props
+}: ScrollViewProps & {
+  children?: React.ReactNode;
+  hideLabels?: boolean;
+} & DrawerContentComponentProps<DrawerContentOptions>) {
+  return (
+    <DrawerContentScrollView {...props}>
+      <DrawerItemList {...props} labelStyle={hideLabels ? { display: 'none' } : undefined} />
+    </DrawerContentScrollView>
+  );
+}
 
 export default function MainTabbedNavigator(props: any) {
   const { width } = useWindowDimensions();
@@ -38,15 +58,12 @@ export default function MainTabbedNavigator(props: any) {
           borderTopColor: Colors.tabIconDefault,
         }}
         // bottom-tabs props
-        screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: Colors.tabIconSelected,
-          tabBarInactiveTintColor: Colors.tabIconDefault,
-          tabBarStyle: [
-            {
-              backgroundColor: Colors.tabBar,
-            },
-          ],
+        tabBarOptions={{
+          style: {
+            backgroundColor: Colors.tabBar,
+          },
+          activeTintColor: Colors.tabIconSelected,
+          inactiveTintColor: Colors.tabIconDefault,
         }}>
         {Object.entries(Screens).map(([name, Screen]) => (
           <Tab.Screen
@@ -63,13 +80,7 @@ export default function MainTabbedNavigator(props: any) {
   return (
     <Drawer.Navigator
       {...props}
-      screenOptions={
-        isTablet
-          ? {
-              drawerLabel: () => null,
-            }
-          : {}
-      }
+      drawerContent={(props) => <CustomDrawerContent {...props} hideLabels={isTablet} />}
       drawerStyle={{ width: isLargeScreen ? undefined : 64 + left }}
       drawerType="permanent">
       {Object.entries(Screens).map(([name, Screen]) => (

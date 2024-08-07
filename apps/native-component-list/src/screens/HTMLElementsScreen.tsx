@@ -37,6 +37,7 @@ import {
   UL,
 } from '@expo/html-elements';
 import View from '@expo/html-elements/build/primitives/View';
+import React from 'react';
 import { ScrollView } from 'react-native';
 
 function CustomArticle({ title, children }: any) {
@@ -94,7 +95,8 @@ function LayoutArticle() {
 function TextArticle() {
   return (
     <CustomArticle title="Text">
-      <A href="https://expo.dev/" target="_blank">
+      {/* @ts-ignore */}
+      <A href="https://expo.io/" target="_blank">
         Anchor
       </A>
       <P>Paragraph</P>
@@ -102,6 +104,7 @@ function TextArticle() {
       <Strong>Strong</Strong>
       <Mark>Mark</Mark>
       <Code>Code</Code>
+      {/* @ts-ignore */}
       <Time>Feb 2020</Time>
       <I>Italic</I>
       <EM>Emphasize</EM>
@@ -169,28 +172,30 @@ const preformattedText = `body {
   color: red;
 }`;
 
-export default function HTMLScreen() {
-  return (
-    <ScrollView style={{ flex: 1, paddingHorizontal: 16 }}>
-      <Nav style={{ padding: 8, borderBottomWidth: 1 }}>
-        <B>Nav</B>
-      </Nav>
+export default class HTMLScreen extends React.Component {
+  static navigationOptions = {
+    title: 'HTML',
+  };
 
-      <Main>
-        <LayoutArticle />
-        <HeadingArticle />
-        <TextArticle />
-        <ListsArticle />
-        <TablesArticle />
-      </Main>
-      <BR />
-      <Footer>
-        <B>Footer</B>
-      </Footer>
-    </ScrollView>
-  );
+  render() {
+    return (
+      <ScrollView style={{ flex: 1, paddingHorizontal: 16 }}>
+        <Nav style={{ padding: 8, borderBottomWidth: 1 }}>
+          <B>Nav</B>
+        </Nav>
+
+        <Main>
+          <LayoutArticle />
+          <HeadingArticle />
+          <TextArticle />
+          <ListsArticle />
+          <TablesArticle />
+        </Main>
+        <BR />
+        <Footer>
+          <B>Footer</B>
+        </Footer>
+      </ScrollView>
+    );
+  }
 }
-
-HTMLScreen.navigationOptions = {
-  title: 'HTML',
-};

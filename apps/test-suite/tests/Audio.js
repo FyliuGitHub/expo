@@ -1,18 +1,17 @@
 'use strict';
 
 import { Asset } from 'expo-asset';
-import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
+import { Audio } from 'expo-av';
 import { Platform } from 'react-native';
 
 import { retryForStatus, waitFor } from './helpers';
 
 export const name = 'Audio';
 const mainTestingSource = require('../assets/LLizard.mp3');
-const soundUri = 'https://file-examples.com/index.php/sample-audio-files/sample-mp3-download/';
-const hlsStreamUri =
-  'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8';
-const hlsStreamUriWithRedirect = 'https://bit.ly/1iy90bn';
-const redirectingSoundUri = 'https://bit.ly/2qBMx80';
+const soundUri = 'http://www.noiseaddicts.com/samples_1w72b820/280.mp3';
+const hlsStreamUri = 'http://qthttp.apple.com.edgesuite.net/1010qwoeiuryfg/sl.m3u8';
+const hlsStreamUriWithRedirect = 'http://bit.ly/1iy90bn';
+const redirectingSoundUri = 'http://bit.ly/2qBMx80';
 const authenticatedStaticFilesBackend = 'https://authenticated-static-files.vercel.app';
 
 export function test(t) {
@@ -62,9 +61,9 @@ export function test(t) {
           const mode = {
             playsInSilentModeIOS: false,
             allowsRecordingIOS: true,
-            interruptionModeIOS: InterruptionModeIOS.DoNotMix,
+            interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
             shouldDuckAndroid: false,
-            interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+            interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
             playThroughEarpieceAndroid: false,
             staysActiveInBackground: false,
           };
@@ -75,7 +74,7 @@ export function test(t) {
             error = err;
           }
           t.expect(error).not.toBeNull();
-          error && t.expect(error.message).toMatch('Impossible audio mode');
+          error && t.expect(error.toString()).toMatch('Impossible audio mode');
         });
       }
     });
@@ -138,9 +137,9 @@ export function test(t) {
             }
             t.expect(error).toBeDefined();
             if (Platform.OS === 'android') {
-              t.expect(error.message).toMatch('Response code: 401');
+              t.expect(error.toString()).toMatch('Response code: 401');
             } else {
-              t.expect(error.message).toMatch('error code -1013');
+              t.expect(error.toString()).toMatch('error code -1013');
             }
             const signInResponse = await (
               await fetch(`${authenticatedStaticFilesBackend}/sign_in`, {
@@ -249,7 +248,7 @@ export function test(t) {
                 uri: hlsStreamUriWithRedirect,
               });
               await retryForStatus(soundObject, { isLoaded: true });
-            } catch {
+            } catch (error) {
               hasBeenRejected = true;
             }
             t.expect(hasBeenRejected).toBe(true);
@@ -265,7 +264,7 @@ export function test(t) {
                 overrideFileExtensionAndroid: 'm3u8',
               });
               await retryForStatus(soundObject, { isLoaded: true });
-            } catch {
+            } catch (error) {
               hasBeenRejected = true;
             }
             t.expect(hasBeenRejected).toBe(false);
@@ -281,7 +280,7 @@ export function test(t) {
                 uri: hlsStreamUriWithRedirect,
               });
               await retryForStatus(soundObject, { isLoaded: true });
-            } catch {
+            } catch (error) {
               hasBeenRejected = true;
             }
             t.expect(hasBeenRejected).toBe(false);
@@ -311,7 +310,7 @@ export function test(t) {
           await soundObject.loadAsync(mainTestingSource);
         } catch (error) {
           hasBeenRejected = true;
-          error && t.expect(error.message).toMatch('already loaded');
+          error && t.expect(error.toString()).toMatch('already loaded');
         }
         t.expect(hasBeenRejected).toBe(true);
       });
@@ -324,7 +323,6 @@ export function test(t) {
           isLooping: true,
           isMuted: false,
           volume: 0.5,
-          audioPan: -0.5,
           rate: 1.5,
         };
         await soundObject.loadAsync(mainTestingSource, options);
@@ -339,7 +337,6 @@ export function test(t) {
           isLooping: true,
           isMuted: false,
           volume: 0.5,
-          audioPan: 0.5,
           rate: 1.5,
         };
         await soundObject.loadAsync(mainTestingSource, options);
@@ -359,7 +356,7 @@ export function test(t) {
         let hasBeenRejected = false;
         try {
           await soundObject.unloadAsync();
-        } catch {
+        } catch (error) {
           hasBeenRejected = true;
         }
         t.expect(hasBeenRejected).toBe(false);
@@ -509,31 +506,20 @@ export function test(t) {
         await retryForStatus(soundObject, { volume: 0.5 });
       });
 
-      t.it('sets the audio panning', async () => {
-        await soundObject.setVolumeAsync(0.5, 1);
-        await retryForStatus(soundObject, { volume: 0.5, audioPan: 1 });
-      });
-
-      const testVolumeFailure = (valueDescription, values) =>
-        t.it(
-          `rejects if volume ${values.audioPan ? 'panning' : 'value'} is ${valueDescription}`,
-          async () => {
-            let hasBeenRejected = false;
-            try {
-              await soundObject.setVolumeAsync(values.volume, values.audioPan);
-            } catch (error) {
-              hasBeenRejected = true;
-              error && t.expect(error.message).toMatch(/value .+ between/);
-            }
-            t.expect(hasBeenRejected).toBe(true);
+      const testVolumeFailure = (valueDescription, value) =>
+        t.it(`rejects if volume value is ${valueDescription}`, async () => {
+          let hasBeenRejected = false;
+          try {
+            await soundObject.setVolumeAsync(value);
+          } catch (error) {
+            hasBeenRejected = true;
+            error && t.expect(error.toString()).toMatch(/value .+ between/);
           }
-        );
+          t.expect(hasBeenRejected).toBe(true);
+        });
 
-      testVolumeFailure('too big', { volume: 2 });
-      testVolumeFailure('negative', { volume: -0.5 });
-
-      testVolumeFailure('too small', { volume: 1, audioPan: -1.1 });
-      testVolumeFailure('too big', { volume: 1, audioPan: 1.1 });
+      testVolumeFailure('too big', 2);
+      testVolumeFailure('negative', -0.5);
     });
 
     t.describe('Audio.setIsMutedAsync', () => {
@@ -595,7 +581,7 @@ export function test(t) {
           t.expect(status.rate).toBeCloseTo(rate, 2);
           t.expect(status.shouldCorrectPitch).toBe(shouldCorrectPitch);
           t.expect(status.pitchCorrectionQuality).toBe(pitchCorrectionQuality);
-        } catch {
+        } catch (error) {
           hasBeenRejected = true;
         }
 

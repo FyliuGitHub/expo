@@ -1,26 +1,26 @@
 import * as SplashScreen from 'expo-splash-screen';
 import * as React from 'react';
 import { Platform, StatusBar } from 'react-native';
+import { AppearanceProvider } from 'react-native-appearance';
 
 import RootNavigation from './src/navigation/RootNavigation';
 import loadAssetsAsync from './src/utilities/loadAssetsAsync';
 
-SplashScreen.preventAutoHideAsync();
-
-function useSplashScreen(loadingFunction: () => void) {
+function useSplashScreen(loadingFunction: () => void | Promise<void>) {
   const [isLoadingCompleted, setLoadingComplete] = React.useState(false);
 
   // Load any resources or data that we need prior to rendering the app
   React.useEffect(() => {
     async function loadAsync() {
       try {
+        await SplashScreen.preventAutoHideAsync();
         await loadingFunction();
       } catch (e) {
         // We might want to provide this error information to an error reporting service
         console.warn(e);
       } finally {
         setLoadingComplete(true);
-        await SplashScreen.hideAsync();
+        SplashScreen.hideAsync();
       }
     }
 
@@ -30,7 +30,7 @@ function useSplashScreen(loadingFunction: () => void) {
   return isLoadingCompleted;
 }
 
-const App = () => {
+export default function App(props: any) {
   const isLoadingCompleted = useSplashScreen(async () => {
     if (Platform.OS === 'ios') {
       StatusBar.setBarStyle('dark-content', false);
@@ -38,7 +38,13 @@ const App = () => {
     await loadAssetsAsync();
   });
 
-  return isLoadingCompleted ? <RootNavigation /> : null;
-};
+  if (!isLoadingCompleted) {
+    return null;
+  }
 
-export default App;
+  return (
+    <AppearanceProvider>
+      <RootNavigation {...props} />
+    </AppearanceProvider>
+  );
+}

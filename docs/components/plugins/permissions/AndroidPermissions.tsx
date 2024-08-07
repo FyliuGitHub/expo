@@ -1,15 +1,17 @@
 import { css } from '@emotion/react';
-import { useMemo } from 'react';
+import React from 'react';
 
 import { androidPermissions, AndroidPermission, PermissionReference } from './data';
 
-import { Callout } from '~/ui/components/Callout';
-import { Cell, HeaderCell, Row, Table, TableHead } from '~/ui/components/Table';
-import { CODE, P, createPermalinkedComponent } from '~/ui/components/Text';
+import Permalink from '~/components/Permalink';
+import { InlineCode } from '~/components/base/code';
+import { Quote } from '~/components/base/paragraph';
 
 // TODO(cedric): all commented code is related to the "granter" column.
 // This column defines if the permission is granted by the system or user (requires notification).
 // We have to clearly communicate what it means before showing it to the user.
+
+// import { QuestionIcon } from '~/components/icons/QuestionIcon';
 
 type AndroidPermissionsProps = {
   permissions: PermissionReference<AndroidPermission>[];
@@ -17,70 +19,62 @@ type AndroidPermissionsProps = {
 
 // const grantedByInfo = 'Some permissions are granted by the system without user approval';
 
-export function AndroidPermissions({ permissions }: AndroidPermissionsProps) {
-  const list = useMemo(() => getPermissions(permissions), [permissions]);
+export function AndroidPermissions(props: AndroidPermissionsProps) {
+  const list = React.useMemo(() => getPermissions(props.permissions), [props.permissions]);
 
   return (
-    <Table>
-      <TableHead>
-        <Row>
-          <HeaderCell>Android Permission</HeaderCell>
-          {/* <HeaderCell>
+    <table>
+      <thead>
+        <tr>
+          <th>Android Permission</th>
+          {/* <th>
             <span css={grantedByInfoStyle} title={grantedByInfo}>
               Granted by <QuestionIcon size={12} title={grantedByInfo} />
             </span>
-          </HeaderCell> */}
-          <HeaderCell>Description</HeaderCell>
-        </Row>
-      </TableHead>
+          </th> */}
+          <th>Description</th>
+        </tr>
+      </thead>
       <tbody>
         {list.map(permission => (
           <AndroidPermissionRow key={permission.name} {...permission} />
         ))}
       </tbody>
-    </Table>
+    </table>
   );
 }
 
-const PermissionPermalink = createPermalinkedComponent(P, {
-  baseNestingLevel: 4,
-  iconSize: 'xs',
-  className: 'inline-flex items-center',
-});
+function AndroidPermissionRow(permission: AndroidPermission) {
+  const { name, description, explanation, warning, apiDeprecated } = permission;
 
-function AndroidPermissionRow({
-  name,
-  description,
-  explanation,
-  warning,
-  apiDeprecated,
-}: AndroidPermission) {
   return (
-    <Row subtle={!!apiDeprecated}>
-      <Cell>
-        <PermissionPermalink id={`permission-${name.toLowerCase()}`}>
-          <CODE>{name}</CODE>
-        </PermissionPermalink>
-      </Cell>
-      {/* <Cell>
+    <tr css={apiDeprecated && deprecatedStyle}>
+      <td>
+        <Permalink id={`permission-${name.toLowerCase()}`}>
+          <span>
+            <InlineCode>{name}</InlineCode>
+          </span>
+        </Permalink>
+      </td>
+      {/* <td>
         <i>{getPermissionGranter(permission)}</i>
-      </Cell> */}
-      <Cell>
+      </td> */}
+      <td>
         {!!description && (
-          <P css={(warning || explanation) && descriptionSpaceStyle}>{description}</P>
+          <p css={(warning || explanation) && descriptionSpaceStyle}>{description}</p>
         )}
         {!!warning && (
-          <Callout css={quoteStyle} type="warning">
-            {warning}
-          </Callout>
+          <Quote css={quoteStyle}>
+            <span>⚠️ {warning}</span>
+          </Quote>
         )}
         {explanation && !warning && (
-          <Callout css={quoteStyle}>
+          <Quote css={quoteStyle}>
             <span dangerouslySetInnerHTML={{ __html: explanation }} />
-          </Callout>
+          </Quote>
         )}
-      </Cell>
-    </Row>
+      </td>
+    </tr>
   );
 }
 
@@ -97,6 +91,10 @@ function getPermissions(permissions: AndroidPermissionsProps['permissions']) {
 // const grantedByInfoStyle = css`
 //   white-space: nowrap;
 // `;
+
+const deprecatedStyle = css`
+  opacity: 0.5;
+`;
 
 const descriptionSpaceStyle = css`
   margin-bottom: 1rem;

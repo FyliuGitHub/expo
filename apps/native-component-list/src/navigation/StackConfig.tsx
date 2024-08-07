@@ -1,4 +1,4 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { HeaderStyleInterpolators } from '@react-navigation/stack';
 import * as React from 'react';
@@ -39,10 +39,12 @@ export default function getStackConfig({
       headerTitleStyle: styles.headerTitle,
       headerPressColorAndroid: Colors.tintColor,
       headerRight: () => (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('searchNavigator')}
-          style={{ marginRight: 16 }}>
-          <Ionicons name="search" size={Platform.OS === 'ios' ? 22 : 25} color={Colors.tintColor} />
+        <TouchableOpacity onPress={() => navigation.navigate('search')} style={{ marginRight: 16 }}>
+          <Ionicons
+            name="md-search"
+            size={Platform.OS === 'ios' ? 22 : 25}
+            color={Colors.tintColor}
+          />
         </TouchableOpacity>
       ),
     }),

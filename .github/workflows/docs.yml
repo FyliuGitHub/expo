@@ -1,18 +1,20 @@
-name: Docs Website
+name: docs
 
 defaults:
   run:
     shell: bash
+    working-directory: docs
 
 on:
   workflow_dispatch: {}
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'docs/**'
       - '.github/workflows/docs.yml'
   pull_request:
     paths:
+      - 'docs/**'
       - '.github/workflows/docs.yml'
 
 concurrency:
@@ -21,70 +23,66 @@ concurrency:
 
 jobs:
   docs:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-18.04
     steps:
-      - name: 👀 Checkout
-        uses: actions/checkout@v4
+      - name: Install Node 14
+        uses: actions/setup-node@v2
         with:
-          fetch-depth: 0
-      - name: ⬢ Setup Node
-        uses: actions/setup-node@v4
+          node-version: '14.17'
+      - name: Check out repository
+        uses: actions/checkout@v2
         with:
-          node-version: 20
-      - name: ♻️ Restore caches
-        uses: ./.github/actions/expo-caches
-        id: expo-caches
+          submodules: true
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+      - uses: actions/cache@v2
         with:
-          yarn-docs: 'true'
-          yarn-tools: 'true'
-          yarn-workspace: 'true'
-      - name: ➕ Add `bin` to GITHUB_PATH
-        run: echo "$(pwd)/bin" >> $GITHUB_PATH
-      - name: 📝 Regenerate `unversioned` data for Docs
-        run: expotools generate-docs-api-data
-      - name: 🧶 Yarn install
-        working-directory: docs
-        if: steps.expo-caches.outputs.yarn-docs-hit != 'true'
-        run: yarn install --frozen-lockfile
-      - name: 🧪 Run Docs tests
-        working-directory: docs
-        run: yarn test
-      - name: 🚨 Lint Docs website code
-        working-directory: docs
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('docs/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - run: yarn install --frozen-lockfile
+      - run: yarn test
+      - run: yarn lint --max-warnings 0
+      - run: yarn danger ci
         env:
-          NODE_ENV: production
-        run: yarn lint --max-warnings 0
-      - name: 💬 Lint Docs website content
-        working-directory: docs
-        run: yarn lint-prose
-      - name: 🏗️ Build Docs website for deploy
-        working-directory: docs
-        run: yarn export
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check if `docs/yarn.lock` has been changed
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            lock:
+              - 'docs/yarn.lock'
+      - name: Cache Next folder
+        if: steps.changes.outputs.lock == 'false'
+        uses: actions/cache@v2
+        with:
+          path: docs/.next/cache
+          key: docs-next-${{ hashFiles('docs/yarn.lock') }}-next-${{ hashFiles('docs/next.config.js') }}
+      - run: yarn export
         timeout-minutes: 20
-      - name: 🔗 Lint pages links
-        working-directory: docs
+        env:
+          USE_ESBUILD: 1
+      - name: lint links
         run: yarn lint-links --quiet
-      - name: ✅ Test links (legacy)
-        working-directory: docs
+      - name: test links (legacy)
         run: |
           yarn export-server &
           while ! nc -z localhost 8000; do
             sleep 1
           done
           yarn test-links http://127.0.0.1:8000
-        timeout-minutes: 3
-      - name: 🚀 Deploy Docs website
-        working-directory: docs
-        if: ${{ github.event.ref == 'refs/heads/main' }}
-        run: ./deploy.sh
+        timeout-minutes: 1
+      - run: ./deploy.sh
+        if: ${{ github.event.ref == 'refs/heads/master' }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: 'us-east-2'
-          AWS_BUCKET: 'docs.expo.dev'
       - name: 🔔 Notify on Slack
         uses: 8398a7/action-slack@v3
-        if: failure() && github.event.ref == 'refs/heads/main'
+        if: failure() && github.event.ref == 'refs/heads/master'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.slack_webhook_docs }}

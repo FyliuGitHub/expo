@@ -37,6 +37,8 @@ const Button: React.FunctionComponent<TouchableOpacityProps> = (props) => {
 
 const ActionSheetProviderScreen = () => (
   <ActionSheetProvider>
+    {/*
+    // @ts-ignore */}
     <App />
   </ActionSheetProvider>
 );
@@ -67,7 +69,7 @@ function ActionSheetIOSExample() {
   const showShareSheet = () => {
     ActionSheetIOS.showShareActionSheetWithOptions(
       {
-        url: 'https://expo.dev',
+        url: 'https://expo.io',
         message: 'message to go with the shared url',
         subject: 'a subject to go in the email heading',
       },
@@ -101,7 +103,7 @@ interface State {
 
 // @ts-ignore
 @connectActionSheet
-class App extends React.Component<{ showActionSheetWithOptions?: any }, State> {
+class App extends React.Component<{ showActionSheetWithOptions: any }, State> {
   readonly state: State = {};
 
   _updateSelectionText = (selectedIndex: number) => {

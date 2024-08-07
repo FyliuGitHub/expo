@@ -1,4 +1,4 @@
-import { Checkbox } from 'expo-checkbox';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Constants from 'expo-constants';
 import React from 'react';
 import { Alert, FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -9,22 +9,26 @@ import PlatformTouchable from '../components/PlatformTouchable';
 import Colors from '../constants/Colors';
 
 function ListItem({ title, onPressItem, selected, id }) {
-  const onPress = () => onPressItem(id);
+  function onPress() {
+    onPressItem(id);
+  }
 
   return (
     <PlatformTouchable onPress={onPress}>
       <View style={styles.listItem}>
         <Text style={styles.label}>{title}</Text>
-        <View style={{ pointerEvents: 'none' }}>
-          <Checkbox color={Colors.tintColor} value={selected} />
-        </View>
+        <MaterialCommunityIcons
+          color={selected ? Colors.tintColor : 'black'}
+          name={selected ? 'checkbox-marked' : 'checkbox-blank-outline'}
+          size={24}
+        />
       </View>
     </PlatformTouchable>
   );
 }
 
 function createQueryString(tests) {
-  if (!Array.isArray(tests) || !tests.every((v) => typeof v === 'string')) {
+  if (!Array.isArray(tests) || !tests.every(v => typeof v === 'string')) {
     throw new Error(
       `test-suite: Cannot create query string for runner. Expected array of strings, instead got: ${tests}`
     );
@@ -64,15 +68,12 @@ export default class SelectScreen extends React.PureComponent {
   }
 
   componentWillUnmount() {
-    if (this._openUrlSubscription != null) {
-      this._openUrlSubscription.remove();
-      this._openUrlSubscription = null;
-    }
+    Linking.removeEventListener('url', this._handleOpenURL);
   }
 
-  checkLinking = (incomingTests) => {
+  checkLinking = incomingTests => {
     // TODO(Bacon): bare-expo should pass a space-separated string.
-    const tests = incomingTests.split(',').map((v) => v.trim());
+    const tests = incomingTests.split(',').map(v => v.trim());
     const query = createQueryString(tests);
     this.props.navigation.navigate('run', { tests: query });
   };
@@ -90,7 +91,7 @@ export default class SelectScreen extends React.PureComponent {
 
     if (url.includes('/all')) {
       // Test all available modules
-      const query = createQueryString(getTestModules().map((m) => m.name));
+      const query = createQueryString(getTestModules().map(m => m.name));
 
       this.props.navigation.navigate('run', {
         tests: query,
@@ -109,19 +110,19 @@ export default class SelectScreen extends React.PureComponent {
   };
 
   componentDidMount() {
-    this._openUrlSubscription = Linking.addEventListener('url', this._handleOpenURL);
+    Linking.addEventListener('url', this._handleOpenURL);
 
     Linking.getInitialURL()
-      .then((url) => {
+      .then(url => {
         this._handleOpenURL({ url });
       })
-      .catch((err) => console.error('Failed to load initial URL', err));
+      .catch(err => console.error('Failed to load initial URL', err));
   }
 
   _keyExtractor = ({ name }) => name;
 
-  _onPressItem = (id) => {
-    this.setState((state) => {
+  _onPressItem = id => {
+    this.setState(state => {
       const selected = new Set(state.selected);
       if (selected.has(id)) selected.delete(id);
       else selected.add(id);
@@ -139,11 +140,11 @@ export default class SelectScreen extends React.PureComponent {
   );
 
   _selectAll = () => {
-    this.setState((prevState) => {
-      if (prevState.selected.size === prevState.modules.length) {
+    this.setState(state => {
+      if (state.selected.size === this.state.modules.length) {
         return { selected: new Set() };
       }
-      return { selected: new Set(prevState.modules.map((item) => item.name)) };
+      return { selected: new Set(this.state.modules.map(item => item.name)) };
     });
   };
 
@@ -164,10 +165,9 @@ export default class SelectScreen extends React.PureComponent {
     const buttonTitle = allSelected ? 'Deselect All' : 'Select All';
 
     return (
-      <>
+      <React.Fragment>
         <FlatList
           data={this.state.modules}
-          contentContainerStyle={{ backgroundColor: '#fff' }}
           extraData={this.state}
           keyExtractor={this._keyExtractor}
           renderItem={this._renderItem}
@@ -179,7 +179,7 @@ export default class SelectScreen extends React.PureComponent {
           onRun={this._navigateToTests}
           onToggle={this._selectAll}
         />
-      </>
+      </React.Fragment>
     );
   }
 }
@@ -187,14 +187,14 @@ export default class SelectScreen extends React.PureComponent {
 function Footer({ buttonTitle, canRunTests, onToggle, onRun }) {
   const { bottom, left, right } = useSafeArea();
 
-  const isRunningInBareExpo = Constants.expoConfig.slug === 'bare-expo';
+  const isRunningInDetox = Constants.manifest && Constants.manifest.slug === 'bare-expo';
   const paddingVertical = 16;
 
   return (
     <View
       style={[
         styles.buttonRow,
-        { paddingBottom: isRunningInBareExpo ? 0 : bottom, paddingLeft: left, paddingRight: right },
+        { paddingBottom: isRunningInDetox ? 0 : bottom, paddingLeft: left, paddingRight: right },
       ]}>
       <FooterButton
         style={{ paddingVertical, alignItems: 'flex-start' }}
@@ -221,14 +221,14 @@ function FooterButton({ title, style, ...props }) {
   );
 }
 
-const HORIZONTAL_MARGIN = 20;
+const HORIZONTAL_MARGIN = 24;
 
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
   },
   footerButtonTitle: {
-    fontSize: 16,
+    fontSize: 18,
     color: Colors.tintColor,
   },
   footerButton: {
@@ -243,18 +243,18 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: HORIZONTAL_MARGIN,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
+    borderBottomColor: '#dddddd',
   },
   label: {
     color: 'black',
-    fontSize: 16,
+    fontSize: 18,
   },
   buttonRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
+    borderTopColor: '#dddddd',
     backgroundColor: 'white',
   },
   contentContainerStyle: {

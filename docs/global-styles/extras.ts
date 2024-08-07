@@ -1,63 +1,9 @@
 import { css } from '@emotion/react';
-import { theme, typography } from '@expo/styleguide';
-import { darkTheme } from '@expo/styleguide-base';
+import { theme, palette } from '@expo/styleguide';
+
+import * as Constants from '~/constants/theme';
 
 export const globalExtras = css`
-  html {
-    background: ${theme.background.default};
-  }
-
-  body {
-    ${typography.body.paragraph}
-    text-rendering: optimizeLegibility;
-    line-height: 1;
-  }
-
-  *:focus-visible {
-    outline: 3px solid ${theme.button.tertiary.icon};
-    outline-offset: 1px;
-    border-radius: 3px;
-  }
-
-  ::selection {
-    background-color: ${theme.palette.blue5};
-    color: ${theme.text.default};
-  }
-
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background-color: transparent;
-    cursor: pointer;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: ${theme.palette.gray5};
-    border-radius: 10px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: ${theme.palette.gray6};
-  }
-
-  div[class*='Terminal'] > div {
-    ::-webkit-scrollbar-thumb {
-      background: ${darkTheme.icon.quaternary};
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: ${darkTheme.icon.tertiary};
-    }
-  }
-
-  img {
-    max-width: 768px;
-    width: 100%;
-  }
-
   img.wide-image {
     max-width: 900px;
   }
@@ -72,15 +18,134 @@ export const globalExtras = css`
     outline: none;
   }
 
+  details {
+    margin-bottom: 1rem;
+    padding-top: 1rem;
+  }
+
+  details summary {
+    outline: none;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+    color: ${theme.text.default};
+
+    ::-webkit-details-marker {
+      color: ${theme.icon.default};
+    }
+  }
+
+  details summary h3 {
+    font-size: 1.2rem;
+    font-weight: 500;
+    font-family: ${Constants.fonts.demi};
+    color: ${theme.text.default};
+    display: inline-block;
+  }
+
+  details summary h4 {
+    font-family: ${Constants.fonts.demi};
+    color: ${theme.text.default};
+    font-size: 1rem;
+    font-weight: 500;
+    display: inline-block;
+    vertical-align: text-top;
+    max-width: 90%;
+  }
+
+  details summary p {
+    margin-top: 0.5rem;
+    margin-right: 1rem;
+    line-height: 160%;
+  }
+
+  details summary:hover {
+    opacity: 0.75;
+  }
+
+  details p {
+    margin-left: 1rem;
+  }
+
+  .snack-inline-example-button {
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    grid-gap: 8px;
+    align-items: center;
+    border: none;
+    border-radius: 4px;
+    padding: 0 16px;
+    height: 40px;
+    margin: 0;
+    margin-bottom: 0.5rem;
+    text-decoration: none;
+    background: ${theme.button.primary.background};
+    color: ${palette.dark.white};
+    font-family: ${Constants.fontFamilies.book};
+    font-size: 1rem;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    transition: all 170ms linear;
+  }
+
+  .snack-inline-example-button:hover,
+  .snack-inline-example-button:focus {
+    box-shadow: 0 2px 8px rgba(0, 1, 0, 0.2);
+    opacity: 0.85;
+  }
+
+  .snack-inline-example-button:focus {
+    outline: 0;
+    border: 0;
+  }
+
+  .snack-inline-example-button:active {
+    outline: 0;
+    border: 0;
+  }
+
+  .diff-container {
+    border: 1px solid ${theme.border.default};
+    border-radius: 2px;
+    margin-bottom: 10px;
+  }
+
+  .diff-container table {
+    font-size: 0.9rem;
+    border-radius: none;
+    border: none;
+  }
+
+  .diff-container td,
+  .diff-container th {
+    border-bottom: none;
+    border-right: none;
+  }
+
+  .diff-container .diff-gutter-insert {
+    background: ${theme.background.success};
+  }
+
+  .diff-container .diff-gutter-delete {
+    background: ${theme.background.error};
+  }
+
+  .diff-container .diff-code-insert {
+    background: ${theme.background.success};
+  }
+
+  .diff-container .diff-code-delete {
+    background: ${theme.background.error};
+  }
+
   .strike {
     text-decoration: line-through;
   }
 
-  code {
-    font-variant-ligatures: none;
-  }
-
-  [cmdk-input] {
-    outline: none;
+  // TODO: investigate why some style is forcing nested ordered lists to have
+  // 1rem bottom margin!
+  ul ul,
+  ol ul {
+    margin-bottom: 0 !important;
   }
 `;

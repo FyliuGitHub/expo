@@ -56,19 +56,15 @@ const data: Data[] = [
 ];
 
 function SwipableList(): React.ReactElement {
-  const onRemove = () => {
+  function onRemove() {
     Alert.alert('Removed');
-  };
+  }
 
   return (
     <View style={s.container}>
       <FlatList
         data={data}
-        // @ts-expect-error: regression in RNGH typings?
-        // Type 'unknown' is not assignable to type 'Data'.ts(2322)
         renderItem={({ item }) => <ListItem item={item} onRemove={onRemove} />}
-        // @ts-expect-error: regression in RNGH typings?
-        // 'item' is of type 'unknown'.
         keyExtractor={(item) => item.id}
       />
     </View>

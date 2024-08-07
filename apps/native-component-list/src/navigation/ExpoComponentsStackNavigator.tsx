@@ -2,22 +2,32 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as React from 'react';
 
-import getStackConfig from './StackConfig';
-import { optionalRequire } from './routeBuilder';
 import TabIcon from '../components/TabIcon';
 import { Layout } from '../constants';
 import ExpoComponents from '../screens/ExpoComponentsScreen';
-import { ImageScreens } from '../screens/Image/ImageScreen';
-import { ScreenConfig } from '../types/ScreenConfig';
+import getStackConfig from './StackConfig';
+import { optionalRequire } from './routeBuilder';
 
 const Stack = createStackNavigator();
 
-export const Screens: ScreenConfig[] = [
+export const Screens = [
+  {
+    getComponent() {
+      return optionalRequire(() => require('../screens/FacebookAdsScreen'));
+    },
+    name: 'FacebookAds',
+  },
   {
     getComponent() {
       return optionalRequire(() => require('../screens/DrawerLayoutAndroidScreen'));
     },
     name: 'DrawerLayoutAndroid',
+  },
+  {
+    getComponent() {
+      return optionalRequire(() => require('../screens/AdMobScreen'));
+    },
+    name: 'Admob',
   },
   {
     getComponent() {
@@ -46,33 +56,15 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
-      return optionalRequire(() => require('../screens/BlurView/BlurViewScreen'));
+      return optionalRequire(() => require('../screens/BlurViewScreen'));
     },
     name: 'BlurView',
-  },
-  {
-    getComponent() {
-      return optionalRequire(() => require('../screens/Camera/CameraScreenLegacy'));
-    },
-    name: 'Camera (legacy)',
   },
   {
     getComponent() {
       return optionalRequire(() => require('../screens/Camera/CameraScreen'));
     },
     name: 'Camera',
-  },
-  {
-    getComponent() {
-      return optionalRequire(() => require('../screens/Camera/CameraScreenBarcode'));
-    },
-    name: 'Camera (barcode)',
-  },
-  {
-    getComponent() {
-      return optionalRequire(() => require('../screens/Camera/CameraScreenBarcodeFromURL'));
-    },
-    name: 'Camera (barcode from URL)',
   },
   {
     getComponent() {
@@ -91,6 +83,18 @@ export const Screens: ScreenConfig[] = [
       return optionalRequire(() => require('../screens/TouchablesScreen'));
     },
     name: 'Touchables',
+  },
+  {
+    getComponent() {
+      return optionalRequire(() => require('../screens/ProgressViewIOSScreen'));
+    },
+    name: 'ProgressViewIOS',
+  },
+  {
+    getComponent() {
+      return optionalRequire(() => require('../screens/ProgressBarAndroidScreen'));
+    },
+    name: 'ProgressBarAndroid',
   },
   {
     getComponent() {
@@ -290,22 +294,6 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
-      return optionalRequire(() => require('../screens/GL/GLReanimatedExample'));
-    },
-    name: 'ReanimatedWorklets',
-    options: { title: 'Reanimated worklets + gesture handler' },
-    route: 'gl/reanimated',
-  },
-  {
-    getComponent() {
-      return optionalRequire(() => require('../screens/GL/GLViewOnBusyThread'));
-    },
-    name: 'GLViewOnBusyThread',
-    options: { title: 'Creating GLView when a thread is busy' },
-    route: 'gl/busythread',
-  },
-  {
-    getComponent() {
       return optionalRequire(() => require('../screens/GestureHandlerPinchScreen'));
     },
     name: 'GestureHandlerPinch',
@@ -339,21 +327,33 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
+      return optionalRequire(() => require('../screens/Image/ImageTestsScreen'));
+    },
+    name: 'ImageTests',
+  },
+  {
+    getComponent() {
+      return optionalRequire(() => require('../screens/Image/ImageTestScreen'));
+    },
+    name: 'ImageTest',
+  },
+  {
+    getComponent() {
       return optionalRequire(() => require('../screens/Reanimated/ReanimatedScreen'));
     },
     name: 'Reanimated',
   },
   {
     getComponent() {
-      return optionalRequire(() => require('../screens/SegmentedControlScreen'));
+      return optionalRequire(() => require('../screens/GifScreen'));
     },
-    name: 'SegmentedControl',
+    name: 'Gif',
   },
   {
     getComponent() {
-      return optionalRequire(() => require('../screens/Skia/SkiaScreen'));
+      return optionalRequire(() => require('../screens/SegmentedControlScreen'));
     },
-    name: 'Skia',
+    name: 'SegmentedControl',
   },
   {
     getComponent() {
@@ -387,33 +387,15 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
-      return optionalRequire(() => require('../screens/ExpoMaps/ExpoMapsScreen'));
+      return optionalRequire(() => require('../screens/AV/VideoScreen'));
     },
-    name: 'ExpoMaps',
-  },
-  {
-    getComponent() {
-      return optionalRequire(() => require('../screens/Audio/AV/VideoScreen'));
-    },
-    name: 'Video (expo-av)',
-  },
-  {
-    getComponent() {
-      return optionalRequire(() => require('../screens/Video/VideoScreen'));
-    },
-    name: 'Video (expo-video)',
+    name: 'Video',
   },
   {
     getComponent() {
       return optionalRequire(() => require('../screens/Screens'));
     },
     name: 'Screens',
-  },
-  {
-    getComponent() {
-      return optionalRequire(() => require('../screens/SymbolImageScreen'));
-    },
-    name: 'Symbols',
   },
   {
     getComponent() {
@@ -430,17 +412,10 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
-      return optionalRequire(() => require('../screens/FlashListScreen'));
+      return optionalRequire(() => require('../screens/SharedElementScreen'));
     },
-    name: 'FlashList',
+    name: 'SharedElement',
   },
-  {
-    getComponent() {
-      return optionalRequire(() => require('../screens/ClipboardPasteButtonScreen'));
-    },
-    name: 'ClipboardPasteButton',
-  },
-  ...ImageScreens,
 ];
 
 function ExpoComponentsStackNavigator(props: { navigation: BottomTabNavigationProp<any> }) {

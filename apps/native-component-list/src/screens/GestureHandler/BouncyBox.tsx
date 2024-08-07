@@ -1,3 +1,4 @@
+// tslint:disable max-classes-per-file
 import React, { Component } from 'react';
 import { Animated, StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import {
@@ -10,7 +11,7 @@ import {
 
 const USE_NATIVE_DRIVER = true;
 
-class Snappable extends Component<{ children?: React.ReactNode }> {
+class Snappable extends Component {
   _dragX = new Animated.Value(0);
   _transX = this._dragX.interpolate({
     inputRange: [-100, -50, 0, 50, 100],
@@ -46,7 +47,7 @@ class Snappable extends Component<{ children?: React.ReactNode }> {
   }
 }
 
-class Twistable extends Component<{ children?: React.ReactNode }> {
+class Twistable extends Component {
   _gesture = new Animated.Value(0);
 
   _rot = this._gesture

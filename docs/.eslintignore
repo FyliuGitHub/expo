@@ -1,9 +1,10 @@
-.cache
+.expo
 .next
-.swc
-.vale
-
+dangerfile.js
+/global-styles/nprogress.ts
 out
 node_modules
 pages/versions/latest
-public
+public/static
+react-native-website
+scripts/schemas

@@ -1,4 +1,4 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
 import { Link, useLinkProps } from '@react-navigation/native';
 import React from 'react';
 import {
@@ -14,9 +14,9 @@ import {
   Pressable,
   useWindowDimensions,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeArea } from 'react-native-safe-area-context';
 
-export interface ListElement {
+interface ListElement {
   name: string;
   route?: string;
   isAvailable?: boolean;
@@ -25,7 +25,6 @@ export interface ListElement {
 interface Props {
   apis: ListElement[];
   renderItemRight?: (props: ListElement) => React.ReactNode;
-  sort?: boolean;
 }
 
 function LinkButton({
@@ -78,7 +77,7 @@ export default function ComponentListScreen(props: Props) {
   const isMobile = width <= 640;
 
   // adjust the right padding for safe area -- we don't need the left because that's where the drawer is.
-  const { bottom, right } = useSafeAreaInsets();
+  const { bottom, right } = useSafeArea();
 
   const renderExampleSection: ListRenderItem<ListElement> = ({ item }) => {
     const { route, name: exampleName, isAvailable } = item;
@@ -100,9 +99,6 @@ export default function ComponentListScreen(props: Props) {
   const keyExtractor = React.useCallback((item: ListElement) => item.name, []);
 
   const sortedApis = React.useMemo(() => {
-    if (props.sort === false) {
-      return props.apis;
-    }
     return props.apis.sort((a, b) => {
       if (a.isAvailable !== b.isAvailable) {
         if (a.isAvailable) {

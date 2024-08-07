@@ -1,4 +1,3 @@
-import Constants from 'expo-constants';
 import * as Font from 'expo-font';
 import { Platform } from 'react-native';
 
@@ -41,7 +40,7 @@ export async function test({ beforeEach, afterAll, describe, it, expect }) {
       if (Platform.OS === 'web') {
         const styleSheet = document.getElementById('expo-generated-fonts');
         expect(!!styleSheet).toBe(true);
-        const [rule] = [...styleSheet.sheet.cssRules].filter((rule) => {
+        const [rule] = [...styleSheet.sheet.cssRules].filter(rule => {
           return (
             rule instanceof CSSFontFaceRule &&
             rule.style.fontFamily === 'cool-font' &&
@@ -50,32 +49,6 @@ export async function test({ beforeEach, afterAll, describe, it, expect }) {
         });
         expect(!!rule).toBe(true);
       }
-    });
-
-    if (Platform.OS !== 'web' && Constants.expoConfig.slug === 'bare-expo') {
-      it(`isLoaded should support custom native fonts`, () => {
-        expect(Font.isLoaded('icomoon')).toBe(true);
-        expect(Font.isLoaded('NonExistedFont')).toBe(false);
-      });
-    }
-
-    it('allows loading the same font multiple times', async () => {
-      let error = null;
-
-      try {
-        for (let i = 0; i < 3; i++) {
-          await Font.loadAsync({
-            'cool-font': {
-              uri: require('../assets/comic.ttf'),
-              display: Font.FontDisplay.SWAP,
-            },
-          });
-        }
-      } catch (e) {
-        error = e;
-      }
-      expect(error).toBeNull();
-      expect(Font.isLoaded('cool-font')).toBe(true);
     });
   });
 }

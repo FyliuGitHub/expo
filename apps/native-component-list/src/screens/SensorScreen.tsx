@@ -1,6 +1,6 @@
-import { type EventSubscription } from 'expo-modules-core';
+import { Subscription } from 'expo-modules-core';
 import * as Sensors from 'expo-sensors';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const FAST_INTERVAL = 16;
@@ -19,27 +19,23 @@ export default class SensorScreen extends React.Component {
         <MagnetometerSensor />
         <MagnetometerUncalibratedSensor />
         <BarometerSensor />
-        <LightSensor />
         <DeviceMotionSensor />
-        <PedometerSensor />
       </ScrollView>
     );
   }
 }
 
-type State<Measurement> = {
-  data: Measurement;
-  isListening: boolean;
+interface State<M extends object> {
+  data: M;
   isAvailable?: boolean;
-};
+}
 
-abstract class SensorBlock<Measurement> extends React.Component<object, State<Measurement>> {
-  readonly state: State<Measurement> = {
-    data: {} as Measurement,
-    isListening: false,
-  };
+// See: https://github.com/expo/expo/pull/10229#discussion_r490961694
+// eslint-disable-next-line @typescript-eslint/ban-types
+abstract class SensorBlock<M extends object> extends React.Component<{}, State<M>> {
+  readonly state: State<M> = { data: {} as M };
 
-  _subscription?: EventSubscription;
+  _subscription?: Subscription;
 
   componentDidMount() {
     this.checkAvailability();
@@ -55,15 +51,14 @@ abstract class SensorBlock<Measurement> extends React.Component<object, State<Me
   }
 
   abstract getName: () => string;
-  abstract getSensor: () => Sensors.DeviceSensor<Measurement>;
+  abstract getSensor: () => Sensors.DeviceSensor<M>;
+  abstract renderData: () => JSX.Element;
 
   _toggle = () => {
     if (this._subscription) {
       this._unsubscribe();
-      this.setState({ isListening: false });
     } else {
       this._subscribe();
-      this.setState({ isListening: true });
     }
   };
 
@@ -76,7 +71,7 @@ abstract class SensorBlock<Measurement> extends React.Component<object, State<Me
   };
 
   _subscribe = () => {
-    this._subscription = this.getSensor().addListener((data: Measurement) => {
+    this._subscription = this.getSensor().addListener((data: any) => {
       this.setState({ data });
     });
   };
@@ -85,21 +80,6 @@ abstract class SensorBlock<Measurement> extends React.Component<object, State<Me
     this._subscription && this._subscription.remove();
     this._subscription = undefined;
   };
-
-  renderData() {
-    return (
-      this.state.data && (
-        <Text>
-          {Object.entries(this.state.data)
-            .sort(([keyA], [keyB]) => {
-              return keyA.localeCompare(keyB);
-            })
-            .map(([key, value]) => `${key}: ${typeof value === 'number' ? round(value) : 0}`)
-            .join('\n')}
-        </Text>
-      )
-    );
-  }
 
   render() {
     if (this.state.isAvailable !== true) {
@@ -111,7 +91,7 @@ abstract class SensorBlock<Measurement> extends React.Component<object, State<Me
         {this.renderData()}
         <View style={styles.buttonContainer}>
           <TouchableOpacity onPress={this._toggle} style={styles.button}>
-            <Text>{this.state.isListening ? 'Stop' : 'Start'}</Text>
+            <Text>Toggle</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={this._slow} style={[styles.button, styles.middleButton]}>
             <Text>Slow</Text>
@@ -125,22 +105,30 @@ abstract class SensorBlock<Measurement> extends React.Component<object, State<Me
   }
 }
 
-class GyroscopeSensor extends SensorBlock<Sensors.GyroscopeMeasurement> {
+abstract class ThreeAxisSensorBlock extends SensorBlock<Sensors.ThreeAxisMeasurement> {
+  renderData = () => (
+    <Text>
+      x: {round(this.state.data.x)} y: {round(this.state.data.y)} z: {round(this.state.data.z)}
+    </Text>
+  );
+}
+
+class GyroscopeSensor extends ThreeAxisSensorBlock {
   getName = () => 'Gyroscope';
   getSensor = () => Sensors.Gyroscope;
 }
 
-class AccelerometerSensor extends SensorBlock<Sensors.AccelerometerMeasurement> {
+class AccelerometerSensor extends ThreeAxisSensorBlock {
   getName = () => 'Accelerometer';
   getSensor = () => Sensors.Accelerometer;
 }
 
-class MagnetometerSensor extends SensorBlock<Sensors.MagnetometerMeasurement> {
+class MagnetometerSensor extends ThreeAxisSensorBlock {
   getName = () => 'Magnetometer';
   getSensor = () => Sensors.Magnetometer;
 }
 
-class MagnetometerUncalibratedSensor extends SensorBlock<Sensors.MagnetometerUncalibratedMeasurement> {
+class MagnetometerUncalibratedSensor extends ThreeAxisSensorBlock {
   getName = () => 'Magnetometer (Uncalibrated)';
   getSensor = () => Sensors.MagnetometerUncalibrated;
 }
@@ -176,7 +164,7 @@ class DeviceMotionSensor extends SensorBlock<Sensors.DeviceMotionMeasurement> {
       {this.renderXYZBlock('Acceleration w/gravity', this.state.data.accelerationIncludingGravity)}
       {this.renderABGBlock('Rotation', this.state.data.rotation)}
       {this.renderABGBlock('Rotation rate', this.state.data.rotationRate)}
-      <Text>Orientation: {Sensors.DeviceMotionOrientation[this.state.data.orientation]}</Text>
+      <Text>Orientation: {this.state.data.orientation}</Text>
     </View>
   );
 }
@@ -192,59 +180,12 @@ class BarometerSensor extends SensorBlock<Sensors.BarometerMeasurement> {
   );
 }
 
-class LightSensor extends SensorBlock<Sensors.LightSensorMeasurement> {
-  getName = () => 'LightSensor';
-  getSensor = () => Sensors.LightSensor;
-  renderData = () => (
-    <View>
-      <Text>Illuminance: {this.state.data.illuminance}</Text>
-    </View>
-  );
-}
-
-const PedometerSensor = () => {
-  const [isPedometerAvailable, setIsPedometerAvailable] = useState('checking');
-  const [pastStepCount, setPastStepCount] = useState(0);
-  const [currentStepCount, setCurrentStepCount] = useState(0);
-
-  useEffect(() => {
-    let listener: EventSubscription;
-    const subscribe = async () => {
-      const isAvailable = await Sensors.Pedometer.isAvailableAsync();
-      setIsPedometerAvailable(String(isAvailable));
-
-      if (isAvailable) {
-        const end = new Date();
-        const start = new Date();
-        start.setDate(end.getDate() - 1);
-
-        const pastStepCountResult = await Sensors.Pedometer.getStepCountAsync(start, end);
-        if (pastStepCountResult) {
-          setPastStepCount(pastStepCountResult.steps);
-        }
-
-        listener = Sensors.Pedometer.watchStepCount((result) => {
-          setCurrentStepCount(result.steps);
-        });
-      }
-    };
-
-    subscribe();
-    return () => listener && listener.remove();
-  }, []);
-
-  return (
-    <View style={styles.sensor}>
-      <Text>Pedometer:</Text>
-      <Text>Is available: {isPedometerAvailable}</Text>
-      <Text>Steps taken in the last 24 hours: {pastStepCount}</Text>
-      <Text>Watch step count: {currentStepCount}</Text>
-    </View>
-  );
-};
-
 function round(n?: number) {
-  return n ? Math.floor(n * 100) / 100 : 0;
+  if (!n) {
+    return 0;
+  }
+
+  return Math.floor(n * 100) / 100;
 }
 
 const styles = StyleSheet.create({

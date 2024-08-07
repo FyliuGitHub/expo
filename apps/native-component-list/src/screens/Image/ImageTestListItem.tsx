@@ -1,38 +1,31 @@
-import { Image, ImageProps } from 'expo-image';
+import { StackNavigationProp } from '@react-navigation/stack';
 import * as React from 'react';
-import {
-  Animated,
-  Dimensions,
-  ImageProps as RNImageProps,
-  StyleSheet,
-  Text,
-  View,
-  Image as RNImage,
-} from 'react-native';
+import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import { Colors } from '../../constants';
+import { getImageComponent, getSelectedCompareComponent } from './ImageComponents';
 import ImageTestView from './ImageTestView';
 import { resolveProps } from './resolveProps';
-import { Colors } from '../../constants';
-
-type ImageTest = {
-  name: string;
-  props: ImageProps | RNImageProps;
-  loadOnDemand?: boolean;
-  testInformation?: string;
-};
+import { ImageTest, Links } from './types';
 
 type PropsType = {
+  navigation: StackNavigationProp<Links>;
   test: ImageTest;
+  tests: ImageTest[];
   animValue?: Animated.Value;
-  useAnimatedComponent: boolean;
 };
-const AnimatedExpoImage = Animated.createAnimatedComponent(Image);
 
-export function ImageTestListItem({ test, animValue, useAnimatedComponent }: PropsType) {
+export default function ImageTestListItem({ test, animValue, tests, navigation }: PropsType) {
+  const onPress = () => {
+    navigation.push('ImageTest', {
+      test,
+      tests,
+    });
+  };
+
   const imageProps = resolveProps(test.props, animValue);
-
   return (
-    <View style={styles.container}>
+    <TouchableOpacity style={styles.container} activeOpacity={0.5} onPress={onPress}>
       <View style={styles.header}>
         <Text style={styles.title}>{test.name}</Text>
       </View>
@@ -40,17 +33,18 @@ export function ImageTestListItem({ test, animValue, useAnimatedComponent }: Pro
         <ImageTestView
           style={styles.image}
           imageProps={imageProps}
-          ImageComponent={useAnimatedComponent ? AnimatedExpoImage : Image}
+          ImageComponent={getImageComponent()}
           loadOnDemand={test.loadOnDemand}
         />
+        <View style={styles.spacer} />
         <ImageTestView
           style={styles.image}
           imageProps={imageProps}
-          ImageComponent={useAnimatedComponent ? Animated.Image : RNImage}
+          ImageComponent={getSelectedCompareComponent()}
           loadOnDemand={test.loadOnDemand}
         />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -77,7 +71,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    columnGap: 10,
+  },
+  spacer: {
+    width: 10,
   },
   image: {
     width: (Dimensions.get('window').width - 30) / 2,

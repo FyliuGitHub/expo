@@ -1,6 +1,8 @@
-import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import * as SMS from 'expo-sms';
 
+import { expectMethodToThrowAsync } from '../TestUtils';
+import { isInteractive } from '../utils/Environment';
 import {
   loadAttachmentsAsync,
   cleanupAttachmentsAsync,
@@ -10,15 +12,13 @@ import {
   testSMSComposeWithNullRecipient,
   testSMSComposeWithUndefinedRecipient,
 } from './SMSCommon';
-import { expectMethodToThrowAsync } from '../TestUtils';
-import { isInteractive } from '../utils/Environment';
 
 export const name = 'SMS';
 
 export function test({ describe, it, expect, beforeAll, afterAll }) {
   describe('SMS', () => {
     describe(`sendSMSAsync()`, () => {
-      if (Device.isDevice) {
+      if (Constants.isDevice) {
         if (isInteractive()) {
           beforeAll(() => loadAttachmentsAsync(expect));
 
@@ -53,13 +53,14 @@ export function test({ describe, it, expect, beforeAll, afterAll }) {
         }
       } else {
         it(`is unavailable`, async () => {
-          expect(await SMS.isAvailableAsync()).toBe(false);
+          const error = await expectMethodToThrowAsync(SMS.sendSMSAsync);
+          expect(error.code).toBe('E_SMS_UNAVAILABLE');
         });
       }
     });
 
     describe(`isAvailableAsync()`, () => {
-      if (Device.isDevice) {
+      if (Constants.isDevice) {
         it(`has access to iOS SMS API`, async () => {
           expect(await SMS.isAvailableAsync()).toBe(true);
         });

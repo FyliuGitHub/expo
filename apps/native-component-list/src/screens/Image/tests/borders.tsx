@@ -1,6 +1,6 @@
-import { anyAnimationDriver, jsOnlyAnimationDriver, tintColor, tintColor2 } from './constants';
 import { images } from '../images';
 import { ImageTestGroup, ImageTestPropsFnInput } from '../types';
+import { tintColor, tintColor2 } from './constants';
 
 const imageTests: ImageTestGroup = {
   name: 'Borders',
@@ -16,7 +16,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Border width',
-      animationDriver: jsOnlyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         style: {
           borderWidth: range(0, 20),
@@ -26,7 +25,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Border radius',
-      animationDriver: anyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         style: {
           borderWidth: 5,
@@ -37,7 +35,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Dotted border',
-      animationDriver: jsOnlyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         style: {
           borderWidth: range(0, 50),
@@ -48,7 +45,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Dashed border',
-      animationDriver: jsOnlyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         style: {
           borderWidth: range(0, 50),
@@ -59,7 +55,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Separate border radius',
-      animationDriver: anyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         source: images.require_jpg1,
         style: {
@@ -74,7 +69,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Separate border radius dotted',
-      animationDriver: anyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         source: images.require_jpg1,
         style: {
@@ -105,7 +99,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Top border',
-      animationDriver: jsOnlyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         source: images.require_jpg1,
         style: {
@@ -118,7 +111,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Right border',
-      animationDriver: jsOnlyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         source: images.require_jpg1,
         style: {
@@ -131,7 +123,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Bottom border',
-      animationDriver: jsOnlyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         source: images.require_jpg1,
         style: {
@@ -144,7 +135,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Left border',
-      animationDriver: jsOnlyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         source: images.require_jpg1,
         style: {
@@ -157,7 +147,7 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Exclude border',
-      props: {
+      props: ({ range }: ImageTestPropsFnInput) => ({
         source: images.require_jpg1,
         style: {
           borderWidth: 12,
@@ -166,11 +156,10 @@ const imageTests: ImageTestGroup = {
           borderBottomWidth: 0,
           borderBottomLeftRadius: 0,
         },
-      },
+      }),
     },
     {
       name: 'Different colors',
-      animationDriver: anyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         source: images.require_jpg1,
         style: {
@@ -196,7 +185,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'All different borders',
-      animationDriver: anyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         source: images.require_jpg1,
         style: {
@@ -217,7 +205,6 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Start border (left on non RTL)',
-      animationDriver: jsOnlyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         source: images.require_jpg1,
         style: {

@@ -8,20 +8,16 @@ import { Page, Section } from '../components/Page';
 const key = 'random_value';
 
 function PersistExample() {
-  const [storedNumber, setStoredNumber] = React.useState('0');
+  const [storedNumber, setStoredNumber] = React.useState('');
+  const [needsRestart, setNeedsRestart] = React.useState(false);
 
   React.useEffect(() => {
-    getItem();
+    AsyncStorage.getItem(key).then((value) => {
+      if (value) {
+        setStoredNumber(value);
+      }
+    });
   }, []);
-
-  const getItem = React.useCallback(async () => {
-    const value = await AsyncStorage.getItem(key);
-    if (value) {
-      setStoredNumber(value);
-    } else {
-      setStoredNumber('0');
-    }
-  }, [setStoredNumber]);
 
   const increment = React.useCallback(async () => {
     const newNumber = +storedNumber > 0 ? +storedNumber + 10 : 10;
@@ -29,12 +25,13 @@ function PersistExample() {
     await AsyncStorage.setItem(key, `${newNumber}`);
 
     setStoredNumber(`${newNumber}`);
-  }, [setStoredNumber, storedNumber]);
+    setNeedsRestart(true);
+  }, [setNeedsRestart, setStoredNumber, storedNumber]);
 
   const clearItem = React.useCallback(async () => {
     await AsyncStorage.removeItem(key);
-    await getItem();
-  }, [getItem]);
+    setNeedsRestart(true);
+  }, [setNeedsRestart]);
 
   return (
     <View>
@@ -42,7 +39,7 @@ function PersistExample() {
       <Button title="Increment by 10" onPress={increment} />
       <Button title="Reset" onPress={clearItem} />
 
-      <Button onPress={() => Updates.reloadAsync()} title="Reload App" />
+      {needsRestart ? <Button onPress={() => Updates.reloadAsync()} title="Reload App" /> : null}
     </View>
   );
 }

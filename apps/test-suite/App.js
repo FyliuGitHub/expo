@@ -5,12 +5,10 @@ import * as React from 'react';
 import AppNavigator from './AppNavigator';
 
 const linking = {
-  prefixes: [Linking.createURL('/')],
+  prefixes: [Linking.makeUrl('/')],
   config: {
-    screens: {
-      select: '',
-      run: 'run',
-    },
+    select: '',
+    run: '/run',
   },
 };
 export default () => (

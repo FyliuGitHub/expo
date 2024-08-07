@@ -1,107 +1,43 @@
-import { ELEMENT_SPACING } from './styles';
+import React from 'react';
 
-import {
-  CommentData,
-  GeneratedData,
-  MethodSignatureData,
-  PropsDefinitionData,
-} from '~/components/plugins/api/APIDataTypes';
-import { APISectionDeprecationNote } from '~/components/plugins/api/APISectionDeprecationNote';
+import { InlineCode } from '~/components/base/code';
+import { B, P } from '~/components/base/paragraph';
+import { H2, H3Code } from '~/components/plugins/Headings';
+import { ConstantDefinitionData, PropsDefinitionData } from '~/components/plugins/api/APIDataTypes';
 import APISectionProps from '~/components/plugins/api/APISectionProps';
-import {
-  CommentTextBlock,
-  resolveTypeName,
-  getComponentName,
-  STYLES_APIBOX,
-  getTagNamesList,
-  H3Code,
-  getPossibleComponentPropsNames,
-} from '~/components/plugins/api/APISectionUtils';
-import { H2, DEMI, P, CODE, MONOSPACE } from '~/ui/components/Text';
+import { CommentTextBlock, resolveTypeName } from '~/components/plugins/api/APISectionUtils';
 
 export type APISectionComponentsProps = {
-  data: GeneratedData[];
-  sdkVersion: string;
+  data: ConstantDefinitionData[];
   componentsProps: PropsDefinitionData[];
 };
 
-const getComponentComment = (comment: CommentData, signatures: MethodSignatureData[]) =>
-  comment || (signatures?.[0]?.comment ?? undefined);
-
-const getComponentType = ({ signatures }: Partial<GeneratedData>) => {
-  if (signatures?.length && signatures[0].type.types) {
-    return 'React.' + signatures[0].type.types.filter(t => t.type === 'reference')[0]?.name;
-  }
-  return 'React.Element';
-};
-
-const getComponentTypeParameters = ({
-  extendedTypes,
-  type,
-  signatures,
-}: Partial<GeneratedData>) => {
-  if (extendedTypes?.length) {
-    return extendedTypes[0];
-  } else if (signatures?.length && signatures[0].parameters.length) {
-    return signatures?.[0].parameters[0].type;
-  }
-  return type;
-};
-
 const renderComponent = (
-  { name, comment, type, extendedTypes, children, signatures }: GeneratedData,
-  sdkVersion: string,
+  { name, comment, type }: ConstantDefinitionData,
   componentsProps?: PropsDefinitionData[]
-): JSX.Element => {
-  const resolvedType = getComponentType({ signatures });
-  const resolvedTypeParameters = getComponentTypeParameters({ type, extendedTypes, signatures });
-  const resolvedName = getComponentName(name, children);
-  const extractedComment = getComponentComment(comment, signatures);
-  return (
-    <div key={`component-definition-${resolvedName}`} css={STYLES_APIBOX} className="!shadow-none">
-      <APISectionDeprecationNote comment={extractedComment} sticky />
-      <H3Code tags={getTagNamesList(comment)}>
-        <MONOSPACE weight="medium" className="wrap-anywhere">
-          {resolvedName}
-        </MONOSPACE>
-      </H3Code>
-      {resolvedType && resolvedTypeParameters && (
-        <P className={ELEMENT_SPACING}>
-          <DEMI theme="secondary">Type:</DEMI>{' '}
-          <CODE>
-            {extendedTypes ? (
-              <>React.{resolveTypeName(resolvedTypeParameters, sdkVersion)}</>
-            ) : (
-              <>
-                {resolvedType}&lt;{resolveTypeName(resolvedTypeParameters, sdkVersion)}&gt;
-              </>
-            )}
-          </CODE>
-        </P>
-      )}
-      <CommentTextBlock comment={extractedComment} />
-      {componentsProps && componentsProps.length ? (
-        <APISectionProps
-          sdkVersion={sdkVersion}
-          data={componentsProps}
-          header={`${resolvedName}Props`}
-        />
-      ) : null}
-    </div>
-  );
-};
+): JSX.Element => (
+  <div key={`component-definition-${name}`}>
+    <H3Code>
+      <InlineCode>{name}</InlineCode>
+    </H3Code>
+    <P>
+      <B>Type:</B> <InlineCode>{resolveTypeName(type)}</InlineCode>
+    </P>
+    <CommentTextBlock comment={comment} />
+    {componentsProps && componentsProps.length ? (
+      <APISectionProps data={componentsProps} header={`${name}Props`} />
+    ) : null}
+  </div>
+);
 
-const APISectionComponents = ({ data, sdkVersion, componentsProps }: APISectionComponentsProps) =>
+const APISectionComponents: React.FC<APISectionComponentsProps> = ({ data, componentsProps }) =>
   data?.length ? (
     <>
-      <H2 key="components-header">{data.length === 1 ? 'Component' : 'Components'}</H2>
+      <H2 key="components-header">Components</H2>
       {data.map(component =>
         renderComponent(
           component,
-          sdkVersion,
-          componentsProps.filter(cp =>
-            getPossibleComponentPropsNames(component.name, component.children).includes(cp.name)
-          )
+          componentsProps.filter(cp => cp.name.includes(component.name))
         )
       )}
     </>

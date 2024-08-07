@@ -1,6 +1,6 @@
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
-import LottieView from 'lottie-react-native';
+import Animation from 'lottie-react-native';
 import React from 'react';
 import {
   Animated,
@@ -12,8 +12,6 @@ import {
   Text,
   View,
 } from 'react-native';
-
-const AnimatedLottieView = Animated.createAnimatedComponent(LottieView);
 
 const makeExample = (name: string, getJson: () => any) => ({ name, getJson });
 const EXAMPLES = [
@@ -178,7 +176,7 @@ export default class LottieScreen extends React.Component<{}, State> {
         />
         <View style={styles.animationContainer}>
           <View key={this.state.exampleName}>
-            <AnimatedLottieView
+            <Animation
               ref={this.setAnim}
               style={styles.animation}
               source={EXAMPLES[this.state.exampleName].getJson()}

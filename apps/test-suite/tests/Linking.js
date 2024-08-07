@@ -1,20 +1,14 @@
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
-import { LogBox, Platform } from 'react-native';
+import { Platform } from 'react-native';
 
 import { waitFor } from './helpers';
 
-const validHttpUrl = 'http://exp.host/';
-const validHttpsUrl = 'https://exp.host/';
-const validExpUrl = 'exp://exp.host/@community/native-component-list';
+const validHttpUrl = 'http://expo.io/';
+const validHttpsUrl = 'https://expo.io/';
+const validExpUrl = 'exp://expo.io/@community/native-component-list';
 const redirectingBackendUrl = 'https://backend-xxswjknyfi.now.sh/?linkingUri=';
-
-// Because the root navigator of test-suite doesn't have a matching screen for URL, it will warn.
-// This is expected as all tests are wrapped in `screens/TestScreen.js`, and not defined as separate screens.
-LogBox.ignoreLogs([
-  'navigation state parsed from the URL contains routes not present in the root navigator',
-]);
 
 export const name = 'Linking';
 
@@ -53,17 +47,16 @@ export function test(t) {
         // "The specified URL has an unsupported scheme. Only HTTP and HTTPS URLs are supported."
         t.it('listener gets called with a proper URL when opened from a web modal', async () => {
           let handlerCalled = false;
-          const testUrl = Linking.createURL('++message=hello');
+          const testUrl = Linking.makeUrl('++message=hello');
           const handler = ({ url }) => {
             t.expect(url).toEqual(testUrl);
             handlerCalled = true;
           };
-          const subscription = Linking.addEventListener('url', handler);
+          Linking.addEventListener('url', handler);
           await WebBrowser.openBrowserAsync(testUrl);
           await waitFor(8000);
           t.expect(handlerCalled).toBe(true);
-          t.expect(subscription).toBeTruthy();
-          subscription.remove();
+          Linking.removeEventListener('url', handler);
         });
 
         // We can't run this test on iOS since iOS asks "whether to open this link in Expo"
@@ -71,29 +64,29 @@ export function test(t) {
         t.it('listener gets called with a proper URL when opened from a web browser', async () => {
           let handlerCalled = false;
           const handler = ({ url }) => {
-            t.expect(url).toEqual(Linking.createURL('++message=Redirected automatically by timer'));
+            t.expect(url).toEqual(Linking.makeUrl('++message=Redirected automatically by timer'));
             handlerCalled = true;
           };
-          const subscription = Linking.addEventListener('url', handler);
-          await Linking.openURL(`${redirectingBackendUrl}${Linking.createURL('++')}`);
+          Linking.addEventListener('url', handler);
+          await Linking.openURL(`${redirectingBackendUrl}${Linking.makeUrl('++')}`);
           await waitFor(8000);
           t.expect(handlerCalled).toBe(true);
-          subscription.remove();
+          Linking.removeEventListener('url', handler);
         });
       }
 
       t.it('listener gets called with a proper URL when opened from a web modal', async () => {
         let handlerCalled = false;
         const handler = ({ url }) => {
-          t.expect(url).toEqual(Linking.createURL('++message=Redirected automatically by timer'));
+          t.expect(url).toEqual(Linking.makeUrl('++message=Redirected automatically by timer'));
           handlerCalled = true;
           if (Platform.OS === 'ios') WebBrowser.dismissBrowser();
         };
-        const subscription = Linking.addEventListener('url', handler);
-        await WebBrowser.openBrowserAsync(`${redirectingBackendUrl}${Linking.createURL('++')}`);
+        Linking.addEventListener('url', handler);
+        await WebBrowser.openBrowserAsync(`${redirectingBackendUrl}${Linking.makeUrl('++')}`);
         await waitFor(1000);
         t.expect(handlerCalled).toBe(true);
-        subscription.remove();
+        Linking.removeEventListener('url', handler);
       });
 
       t.it('listener gets called with a proper URL when opened with Linking.openURL', async () => {
@@ -101,11 +94,11 @@ export function test(t) {
         const handler = ({ url }) => {
           handlerCalled = true;
         };
-        const subscription = Linking.addEventListener('url', handler);
-        await Linking.openURL(Linking.createURL('++'));
+        Linking.addEventListener('url', handler);
+        await Linking.openURL(Linking.makeUrl('++'));
         await waitFor(500);
         t.expect(handlerCalled).toBe(true);
-        subscription.remove();
+        Linking.removeEventListener('url', handler);
       });
 
       t.it('listener parses out deep link information correctly', async () => {
@@ -118,11 +111,11 @@ export function test(t) {
           t.expect(queryParams.query).toEqual('param');
           handlerCalled = true;
         };
-        const subscription = Linking.addEventListener('url', handler);
-        await Linking.openURL(Linking.createURL('++test/path?query=param'));
+        Linking.addEventListener('url', handler);
+        await Linking.openURL(Linking.makeUrl('++test/path?query=param'));
         await waitFor(500);
         t.expect(handlerCalled).toBe(true);
-        subscription.remove();
+        Linking.removeEventListener('url', handler);
       });
     });
   });

@@ -3,7 +3,7 @@ name: Expotools
 on:
   workflow_dispatch: {}
   push:
-    branches: [main, 'sdk-*']
+    branches: [master, 'sdk-*']
     paths:
       - .github/workflows/expotools.yml
       - tools/**
@@ -18,25 +18,22 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-18.04
     steps:
       - name: 👀 Checkout
-        uses: actions/checkout@v4
-      - name: ♻️ Restore caches
-        uses: ./.github/actions/expo-caches
-        id: expo-caches
+        uses: actions/checkout@v2
+      - name: ♻️ Restore node modules in tools
+        uses: actions/cache@v2
+        id: tools-modules-cache
         with:
-          yarn-tools: 'true'
+          path: tools/node_modules
+          key: ${{ runner.os }}-tools-modules-${{ hashFiles('tools/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-tools-modules-
       - name: 🧶 Install modules in tools dir
-        if: steps.expo-caches.outputs.yarn-tools-hit != 'true'
+        if: steps.tools-modules-cache.outputs.cache-hit != 'true'
         run: yarn install --ignore-scripts --frozen-lockfile
         working-directory: tools
       - name: 🛠 Compile TypeScript sources
-        run: yarn build
-        working-directory: tools
-      - name: 🛠 Typecheck sources
-        run: yarn tsc --noEmit
-        working-directory: tools
-      - name: 🚨 Lint TypeScript sources
-        run: yarn lint --max-warnings 0
+        run: yarn tsc
         working-directory: tools

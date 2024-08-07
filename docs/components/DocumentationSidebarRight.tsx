@@ -1,36 +1,48 @@
-import { Button, mergeClasses } from '@expo/styleguide';
-import { ArrowCircleUpIcon } from '@expo/styleguide-icons/outline/ArrowCircleUpIcon';
-import { LayoutAlt03Icon } from '@expo/styleguide-icons/outline/LayoutAlt03Icon';
+import { css } from '@emotion/react';
 import * as React from 'react';
 
+import { BASE_HEADING_LEVEL, Heading, HeadingManager } from '../common/headingManager';
 import DocumentationSidebarRightLink from './DocumentationSidebarRightLink';
 
-import { BASE_HEADING_LEVEL, Heading, HeadingManager } from '~/common/headingManager';
-import withHeadingManager, {
-  HeadingManagerProps,
-} from '~/components/page-higher-order/withHeadingManager';
-import { CALLOUT } from '~/ui/components/Text';
+import withHeadingManager from '~/components/page-higher-order/withHeadingManager';
+import * as Constants from '~/constants/theme';
+
+const STYLES_SIDEBAR = css`
+  padding: 20px 24px 24px 24px;
+  width: 280px;
+
+  @media screen and (max-width: ${Constants.breakpoints.mobile}) {
+    width: 100%;
+  }
+`;
 
 const UPPER_SCROLL_LIMIT_FACTOR = 1 / 4;
 const LOWER_SCROLL_LIMIT_FACTOR = 3 / 4;
 
-const ACTIVE_ITEM_OFFSET_FACTOR = 1 / 20;
+const ACTIVE_ITEM_OFFSET_FACTOR = 1 / 6;
 
 const isDynamicScrollAvailable = () => {
-  return !window.matchMedia('(prefers-reduced-motion)').matches;
+  if (!history?.replaceState) {
+    return false;
+  }
+
+  if (window.matchMedia('(prefers-reduced-motion)').matches) {
+    return false;
+  }
+
+  return true;
 };
 
-type Props = React.PropsWithChildren<{
+type Props = {
   maxNestingDepth?: number;
   selfRef?: React.RefObject<any>;
   contentRef?: React.RefObject<any>;
-}>;
+};
 
 type PropsWithHM = Props & { headingManager: HeadingManager };
 
 type State = {
   activeSlug: string | null;
-  showScrollTop: boolean;
 };
 
 class DocumentationSidebarRight extends React.Component<PropsWithHM, State> {
@@ -40,7 +52,6 @@ class DocumentationSidebarRight extends React.Component<PropsWithHM, State> {
 
   state = {
     activeSlug: null,
-    showScrollTop: false,
   };
 
   private slugScrollingTo: string | null = null;
@@ -53,7 +64,6 @@ class DocumentationSidebarRight extends React.Component<PropsWithHM, State> {
       if (!ref || !ref.current) {
         continue;
       }
-      this.setState({ showScrollTop: contentScrollPosition > 120 });
       if (
         ref.current.offsetTop >=
           contentScrollPosition + window.innerHeight * ACTIVE_ITEM_OFFSET_FACTOR &&
@@ -82,22 +92,7 @@ class DocumentationSidebarRight extends React.Component<PropsWithHM, State> {
     );
 
     return (
-      <nav className="pt-14 pb-12 px-6 w-[280px]" data-sidebar>
-        <CALLOUT
-          weight="medium"
-          className="absolute -mt-14 bg-default w-[248px] flex min-h-[32px] pt-4 pb-2 gap-2 mb-2 items-center select-none z-10">
-          <LayoutAlt03Icon className="icon-sm" /> On this page
-          <Button
-            theme="quaternary"
-            size="xs"
-            className={mergeClasses(
-              'ml-auto mr-2 px-2 transition-opacity duration-300',
-              !this.state.showScrollTop && 'opacity-0 pointer-events-none'
-            )}
-            onClick={e => this.handleTopClick(e)}>
-            <ArrowCircleUpIcon className="icon-sm text-icon-secondary" />
-          </Button>
-        </CALLOUT>
+      <nav css={STYLES_SIDEBAR} data-sidebar>
         {displayedHeadings.map(heading => {
           const isActive = heading.slug === this.state.activeSlug;
           return (
@@ -137,51 +132,31 @@ class DocumentationSidebarRight extends React.Component<PropsWithHM, State> {
     }
   };
 
-  private handleLinkClick = (
-    event: React.MouseEvent<HTMLAnchorElement>,
-    { slug, ref, type }: Heading
-  ) => {
+  private handleLinkClick = (event: React.MouseEvent<HTMLAnchorElement>, heading: Heading) => {
+    if (!isDynamicScrollAvailable()) {
+      return;
+    }
+
     event.preventDefault();
+    const { title, slug, ref } = heading;
 
     // disable sidebar scrolling until we reach that slug
     this.slugScrollingTo = slug;
 
-    const scrollOffset = type === 'inlineCode' ? 50 : 26;
-
     this.props.contentRef?.current?.getScrollRef().current?.scrollTo({
-      behavior: isDynamicScrollAvailable() ? 'smooth' : 'instant',
-      top: ref.current?.offsetTop - window.innerHeight * ACTIVE_ITEM_OFFSET_FACTOR - scrollOffset,
+      behavior: 'smooth',
+      top: ref.current?.offsetTop - window.innerHeight * ACTIVE_ITEM_OFFSET_FACTOR,
     });
-
-    if (history?.replaceState) {
-      history.replaceState(history.state, '', '#' + slug);
-    }
-  };
-
-  private handleTopClick = (
-    event: React.MouseEvent<HTMLButtonElement> | React.MouseEvent<HTMLAnchorElement>
-  ) => {
-    event.preventDefault();
-
-    this.props.contentRef?.current?.getScrollRef().current?.scrollTo({
-      behavior: isDynamicScrollAvailable() ? 'smooth' : 'instant',
-      top: 0,
-    });
-
-    if (history?.replaceState) {
-      history.replaceState(history.state, '', ' ');
-    }
+    history.replaceState(history.state, title, '#' + slug);
   };
 }
-
-type ReactRefProps = { reactRef: React.Ref<DocumentationSidebarRight> };
 
 const SidebarWithHeadingManager = withHeadingManager(function SidebarWithHeadingManager({
   reactRef,
   ...props
-}: Props & HeadingManagerProps & ReactRefProps) {
+}) {
   return <DocumentationSidebarRight {...props} ref={reactRef} />;
-}) as React.FC<Props & ReactRefProps>;
+}) as React.FC<Props & { reactRef: React.Ref<DocumentationSidebarRight> }>;
 
 SidebarWithHeadingManager.displayName = 'SidebarRightRefWrapper';
 

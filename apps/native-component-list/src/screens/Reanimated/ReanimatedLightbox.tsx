@@ -1,4 +1,4 @@
-import { useHeaderHeight } from '@react-navigation/elements';
+import { useHeaderHeight } from '@react-navigation/stack';
 import React, { useState, useEffect, RefObject } from 'react';
 import { Dimensions, StyleSheet, View, Image, Platform, StatusBar } from 'react-native';
 import {
@@ -108,9 +108,6 @@ function ListItem({ item, index, onPress }: ListItemProps) {
       // measure the image
       // width/height and position to animate from it to the full screen one
       const measurements = measure(ref);
-      if (!measurements) {
-        return;
-      }
 
       width.value = measurements.width;
       height.value = measurements.height;
@@ -275,22 +272,22 @@ const images: ExampleImage[] = Array.from({ length: 30 }, (_, index) => {
 function LightboxExample(): React.ReactElement {
   const [activeImage, setActiveImage] = useState<ActiveExampleImage | null>(null);
 
-  const onItemPress = (
+  function onItemPress(
     // @ts-ignore: FIXME AnimatedImage type
     animatedRef: RefObject<AnimatedImage>,
     item: ExampleImage,
     svs: ActiveExampleImageProperties
-  ) => {
+  ) {
     setActiveImage({
       animatedRef,
       item,
       ...svs,
     });
-  };
+  }
 
-  const onClose = () => {
+  function onClose() {
     setActiveImage(null);
-  };
+  }
 
   const headerHeight = useHeaderHeight() - (StatusBar.currentHeight ?? 0);
   const height = Platform.OS === 'web' ? dimensions.height - headerHeight : undefined;

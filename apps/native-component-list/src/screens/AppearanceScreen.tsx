@@ -1,24 +1,52 @@
-import { StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { EventSubscription } from 'fbemitter';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Appearance, ColorSchemeName } from 'react-native-appearance';
 
-export default function AppearanceScreen() {
-  const colorScheme = useColorScheme();
-
-  const isDark = colorScheme === 'dark';
-
-  return (
-    <View style={[styles.screen, isDark ? styles.darkScreen : styles.lightScreen]}>
-      <Text style={isDark ? styles.darkText : styles.lightText}>
-        {`Current color scheme: `}
-
-        <Text style={styles.boldText}>{colorScheme}</Text>
-      </Text>
-    </View>
-  );
+interface State {
+  colorScheme: ColorSchemeName;
 }
 
-AppearanceScreen.navigationOptions = {
-  title: 'Appearance',
-};
+// See: https://github.com/expo/expo/pull/10229#discussion_r490961694
+// eslint-disable-next-line @typescript-eslint/ban-types
+export default class AppearanceScreen extends React.Component<{}, State> {
+  static navigationOptions = {
+    title: 'Appearance',
+  };
+
+  subscription?: EventSubscription;
+
+  state: State = {
+    colorScheme: Appearance.getColorScheme(),
+  };
+
+  componentDidMount() {
+    this.subscription = Appearance.addChangeListener(
+      ({ colorScheme }: { colorScheme: ColorSchemeName }) => {
+        this.setState({ colorScheme });
+      }
+    );
+  }
+
+  componentWillUnmount() {
+    if (this.subscription) this.subscription.remove();
+  }
+
+  render() {
+    const { colorScheme } = this.state;
+    const isDark = colorScheme === 'dark';
+
+    return (
+      <View style={[styles.screen, isDark ? styles.darkScreen : styles.lightScreen]}>
+        <Text style={isDark ? styles.darkText : styles.lightText}>
+          {`Current color scheme: `}
+
+          <Text style={styles.boldText}>{this.state.colorScheme}</Text>
+        </Text>
+      </View>
+    );
+  }
+}
 
 const styles = StyleSheet.create({
   screen: {

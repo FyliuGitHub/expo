@@ -1,11 +1,13 @@
 import { css } from '@emotion/react';
-import { typography } from '@expo/styleguide';
-import { palette } from '@expo/styleguide-base';
+import { palette } from '@expo/styleguide';
+
+import { paragraph } from '~/components/base/typography';
+import * as Constants from '~/constants/theme';
 
 export const globalTippy = css`
   div.tippy-box {
     text-align: left;
-    background: ${palette.black};
+    background: ${palette.dark.black};
     border-radius: 4px;
     margin-bottom: 10px;
   }
@@ -15,18 +17,19 @@ export const globalTippy = css`
   }
 
   .tippy-box[data-theme~='expo'] .tippy-content {
-    ${typography.body.paragraph};
-    color: ${palette.dark.gray12};
+    ${paragraph};
+    color: ${palette.dark.gray[900]};
+    font-family: ${Constants.fonts.book};
     font-weight: 400;
     font-size: 16px;
     line-height: 160%;
-    background: ${palette.black};
+    background: ${palette.dark.black};
     padding: 18px;
     margin-bottom: -10px;
     border-radius: 4px;
   }
 
   .tippy-content a {
-    color: ${palette.dark.gray12};
+    color: ${palette.dark.gray[900]};
   }
 `;

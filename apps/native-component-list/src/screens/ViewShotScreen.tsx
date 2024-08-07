@@ -1,7 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import * as MediaLibrary from 'expo-media-library';
 import { Platform } from 'expo-modules-core';
-import { useRef, useState } from 'react';
+import * as Permissions from 'expo-permissions';
+import React from 'react';
 import { Dimensions, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { captureRef as takeSnapshotAsync, captureScreen } from 'react-native-view-shot';
 
@@ -10,25 +11,39 @@ import Button from '../components/Button';
 // Source: https://codepen.io/zessx/pen/rDEAl <3
 const gradientColors = ['#90dffe', '#38a3d1'];
 
-export default function ViewShotScreen() {
-  const view = useRef<View>();
-  const [image, setImage] = useState<string>();
-  const [screenUri, setScreenUri] = useState<string>();
+interface State {
+  image?: string;
+  screenUri?: string;
+}
 
-  const handlePress = async () => {
+// See: https://github.com/expo/expo/pull/10229#discussion_r490961694
+// eslint-disable-next-line @typescript-eslint/ban-types
+export default class ViewShotScreen extends React.Component<{}, State> {
+  static navigationOptions = {
+    title: 'ViewShot',
+  };
+
+  readonly state: State = {};
+  view?: View;
+
+  handleRef = (ref: View) => {
+    this.view = ref;
+  };
+
+  handlePress = async () => {
     try {
-      const image = await takeSnapshotAsync(view.current!, {
+      const image = await takeSnapshotAsync(this.view!, {
         format: 'png',
         quality: 0.5,
         result: 'data-uri',
       });
-      setImage(image);
+      this.setState({ image });
     } catch (e) {
       console.error(e);
     }
   };
 
-  const handleScreenCapturePress = async () => {
+  handleScreenCapturePress = async () => {
     if (Platform.OS === 'web') {
       try {
         const screenUri = await takeSnapshotAsync(undefined as unknown as number, {
@@ -36,7 +51,7 @@ export default function ViewShotScreen() {
           quality: 0.8,
           result: 'data-uri',
         });
-        setScreenUri(screenUri);
+        this.setState({ screenUri });
       } catch (e) {
         console.error(e);
       }
@@ -46,15 +61,17 @@ export default function ViewShotScreen() {
       format: 'jpg',
       quality: 0.8,
     });
-    setScreenUri(uri);
+    this.setState({ screenUri: uri });
   };
 
-  const handleAddToMediaLibraryPress = async () => {
-    if (screenUri) {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
+  handleAddToMediaLibraryPress = async () => {
+    const uri = this.state.screenUri;
+
+    if (uri) {
+      const { status } = await Permissions.askAsync(Permissions.MEDIA_LIBRARY);
 
       if (status === 'granted') {
-        await MediaLibrary.createAssetAsync(screenUri);
+        await MediaLibrary.createAssetAsync(uri);
         alert('Successfully added captured screen to media library');
       } else {
         alert('Media library permissions not granted');
@@ -62,47 +79,45 @@ export default function ViewShotScreen() {
     }
   };
 
-  const imageSource = { uri: image };
-  return (
-    <ScrollView contentContainerStyle={{ alignItems: 'center' }}>
-      <View
-        style={styles.snapshotContainer}
-        collapsable={false}
-        // @ts-expect-error
-        ref={view}>
-        <LinearGradient colors={gradientColors} style={styles.gradient} start={[0, 0]} end={[0, 1]}>
-          <Image style={styles.snapshot} source={imageSource} />
-          <Text style={styles.text}>Snapshot will show above</Text>
-        </LinearGradient>
-      </View>
-      <Button style={styles.button} onPress={handlePress} title="TAKE THE (SNAP)SHOT!" />
-      <Button
-        style={styles.button}
-        onPress={handleScreenCapturePress}
-        title="Capture whole screen"
-      />
-      <Image
-        style={{
-          width: Dimensions.get('window').width,
-          height: Dimensions.get('window').height,
-          borderColor: '#f00',
-          borderWidth: 10,
-        }}
-        source={{ uri: screenUri }}
-      />
-      <Button
-        style={styles.button}
-        disabled={!screenUri}
-        onPress={handleAddToMediaLibraryPress}
-        title="Add to media library"
-      />
-    </ScrollView>
-  );
+  render() {
+    const imageSource = { uri: this.state.image };
+    return (
+      <ScrollView contentContainerStyle={{ alignItems: 'center' }}>
+        <View style={styles.snapshotContainer} ref={this.handleRef} collapsable={false}>
+          <LinearGradient
+            colors={gradientColors}
+            style={styles.gradient}
+            start={[0, 0]}
+            end={[0, 1]}>
+            <Image style={styles.snapshot} source={imageSource} />
+            <Text style={styles.text}>Snapshot will show above</Text>
+          </LinearGradient>
+        </View>
+        <Button style={styles.button} onPress={this.handlePress} title="TAKE THE (SNAP)SHOT!" />
+        <Button
+          style={styles.button}
+          onPress={this.handleScreenCapturePress}
+          title="Capture whole screen"
+        />
+        <Image
+          style={{
+            width: Dimensions.get('window').width,
+            height: Dimensions.get('window').height,
+            borderColor: '#f00',
+            borderWidth: 10,
+          }}
+          source={{ uri: this.state.screenUri }}
+        />
+        <Button
+          style={styles.button}
+          disabled={!this.state.screenUri}
+          onPress={this.handleAddToMediaLibraryPress}
+          title="Add to media library"
+        />
+      </ScrollView>
+    );
+  }
 }
-
-ViewShotScreen.navigationOptions = {
-  title: 'ViewShot',
-};
 
 const styles = StyleSheet.create({
   snapshotContainer: {

@@ -1,29 +1,23 @@
-// To prebuild:
-// 1. `npm pack` in `../../templates/expo-template-bare-minimum`
-// 2. `EXPO_SDK_VERSION=43.0.0 expo prebuild --clean --template --no-install ../../templates/expo-template-bare-minimum/expo-template-bare-minimum-42.0.0.tgz`
-//   - This can be debugged with `EXPO_DEBUG=1` and `DEBUG=expo:*`
-// 3. `pod install` in the ios folder. Do this in its own step since direnv may break your cocoapods install.
-// 4. `EXPO_SDK_VERSION=43.0.0 expo run:ios --no-install`
-//   - This can be debugged with `EXPO_DEBUG=1` and `DEBUG=expo:*`
-// 5. `EXPO_SDK_VERSION=43.0.0 expo run:android`
 export default ({ config }) => {
-  config.version = '43.0.0';
+  config.version = '41.0.0';
   // app.json defines the sdkVersion as UNVERSIONED, we can override it here dynamically if we need to,
   // for example with an environment variable.
-  if (process.env.EXPO_SDK_VERSION) {
-    config.sdkVersion = process.env.EXPO_SDK_VERSION;
-  }
+  // config.sdkVersion = '41.0.0';
   config.plugins = [
     // iOS plugins
     // Add a plugin to modify the AppDelegate.
     './plugins/withNotFoundModule',
     // Add the React DevMenu back to the client.
     './plugins/withDevMenu',
+    // Add AsyncStorage
+    './plugins/withExpoAsyncStorage',
+    // Set the minimum version to 11 for Google Sign-In support -- TODO: Maybe this belongs in expo-google-sign-in?
+    ['./plugins/withPodfileMinVersion', '11.0'],
 
     // Android plugins
 
-    // expo-modules-test-core requires kotlin, so additional setup must be executed.
-    'expo-modules-test-core',
+    // unimodules-test-core requires kotlin, so additional setup must be executed.
+    'unimodules-test-core',
     [
       './plugins/withGradleProperties',
       {
@@ -33,11 +27,11 @@ export default ({ config }) => {
       },
     ],
     [
-      // expo-modules-test-core must be added manually.
+      // unimodules-test-core must be added manually.
       './plugins/withSettingsImport',
       {
-        packageName: 'expo-modules-test-core',
-        packagePath: '../../../packages/expo-modules-test-core/android',
+        packageName: 'unimodules-test-core',
+        packagePath: '../../../packages/unimodules-test-core/android',
       },
     ],
   ];
@@ -57,14 +51,6 @@ export default ({ config }) => {
       sounds: ['./assets/sounds/cat.wav'],
     },
   ]);
-
-  // The dev client plugins shouldn't be installed
-  config._internal.pluginHistory = {
-    // expo-dev-launcher causes prebuild to freeze on a find/replace.
-    'expo-dev-launcher': {},
-    'expo-dev-menu': {},
-    'expo-dev-client': {},
-  };
 
   return config;
 };

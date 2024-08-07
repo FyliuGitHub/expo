@@ -1,9 +1,17 @@
 import { B } from '@expo/html-elements';
 import { Picker } from '@react-native-picker/picker';
-import React from 'react';
+import * as React from 'react';
 import { StyleSheet, View, TextStyle, ViewStyle } from 'react-native';
 
-type Props = {
+export default function TitledPicker({
+  style,
+  titleStyle,
+  title,
+  value,
+  setValue,
+  items,
+  disabled,
+}: {
   style?: ViewStyle;
   titleStyle?: TextStyle;
   title?: string;
@@ -11,10 +19,9 @@ type Props = {
   items: { key: string; value: string }[];
   disabled?: boolean;
   setValue: (value: string) => void;
-};
-
-const TitledPicker = ({ style, titleStyle, title, value, setValue, items, disabled }: Props) => {
+}) {
   const outputTitle = disabled ? `${title} (Disabled)` : title;
+
   return (
     <View style={[styles.container, style]}>
       <B style={[styles.title, titleStyle]}>{outputTitle}</B>
@@ -28,7 +35,7 @@ const TitledPicker = ({ style, titleStyle, title, value, setValue, items, disabl
       </Picker>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -46,5 +53,3 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
 });
-
-export default TitledPicker;

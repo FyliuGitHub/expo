@@ -1,6 +1,6 @@
 import { Animated } from 'react-native';
 
-import { ImageTestProps, ImageTestEventHandler } from './types';
+import { ImageProps, ImageTestProps, ImageTestEventHandler } from './types';
 
 type LogCallback = (message: string) => void;
 
@@ -13,7 +13,7 @@ function range(
   end: number,
   animValue?: Animated.Value,
   flatten?: boolean
-): number | Animated.AnimatedInterpolation<number> | string {
+): number | Animated.AnimatedInterpolation | string {
   if (animValue) {
     if (flatten) {
       // @ts-ignore
@@ -59,7 +59,7 @@ export function resolveProps(
   animValue?: Animated.Value,
   flatten?: boolean,
   logCallback?: LogCallback
-): ImageTestProps {
+): ImageProps {
   if (typeof props === 'function') {
     return props({
       range: (start: number, end: number) => range(start, end, animValue, flatten),

@@ -2,24 +2,14 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as React from 'react';
 
+import TabIcon from '../components/TabIcon';
+import ExpoApis from '../screens/ExpoApisScreen';
 import getStackConfig from './StackConfig';
 import { optionalRequire } from './routeBuilder';
-import TabIcon from '../components/TabIcon';
-import { AudioScreens } from '../screens/Audio/AudioScreen';
-import ExpoApis from '../screens/ExpoApisScreen';
-import { ModulesCoreScreens } from '../screens/ModulesCore/ModulesCoreScreen';
-import { ScreenConfig } from '../types/ScreenConfig';
 
 const Stack = createStackNavigator();
 
-export const Screens: ScreenConfig[] = [
-  {
-    getComponent() {
-      return optionalRequire(() => require('../screens/ModulesCore/ModulesCoreScreen'));
-    },
-    name: 'ModulesCore',
-    options: { title: 'Expo Modules Core' },
-  },
+export const Screens = [
   {
     getComponent() {
       return optionalRequire(() => require('../screens/StatusBarScreen'));
@@ -34,7 +24,13 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
-      return optionalRequire(() => require('../screens/Clipboard/ClipboardScreen'));
+      return optionalRequire(() => require('../screens/Amplitude/AmplitudeScreen'));
+    },
+    name: 'Amplitude',
+  },
+  {
+    getComponent() {
+      return optionalRequire(() => require('../screens/ClipboardScreen'));
     },
     name: 'Clipboard',
   },
@@ -59,6 +55,13 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
+      return optionalRequire(() => require('../screens/AppAuthScreen'));
+    },
+    name: 'AppAuth',
+    options: { title: 'App Auth' },
+  },
+  {
+    getComponent() {
       return optionalRequire(() => require('../screens/AppearanceScreen'));
     },
     name: 'Appearance',
@@ -78,7 +81,7 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
-      return optionalRequire(() => require('../screens/Audio/AudioScreen'));
+      return optionalRequire(() => require('../screens/AV/AudioScreen'));
     },
     name: 'Audio',
   },
@@ -110,6 +113,12 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
+      return optionalRequire(() => require('../screens/BranchScreen'));
+    },
+    name: 'Branch',
+  },
+  {
+    getComponent() {
       return optionalRequire(() => require('../screens/BrightnessScreen'));
     },
     name: 'Brightness',
@@ -134,6 +143,18 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
+      return optionalRequire(() => require('../screens/FacebookAppEventsScreen'));
+    },
+    name: 'FacebookAppEvents',
+  },
+  {
+    getComponent() {
+      return optionalRequire(() => require('../screens/FacebookLoginScreen'));
+    },
+    name: 'FacebookLogin',
+  },
+  {
+    getComponent() {
       return optionalRequire(() => require('../screens/FaceDetectorScreen'));
     },
     name: 'FaceDetector',
@@ -146,9 +167,28 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
+      return optionalRequire(() => require('../screens/FirebaseRecaptchaScreen'));
+    },
+    name: 'FirebaseRecaptcha',
+  },
+  {
+    getComponent() {
       return optionalRequire(() => require('../screens/FontScreen'));
     },
     name: 'Font',
+  },
+  {
+    getComponent() {
+      return optionalRequire(() => require('../screens/GoogleScreen'));
+    },
+    name: 'Google',
+  },
+  {
+    getComponent() {
+      return optionalRequire(() => require('../screens/GoogleSignInScreen'));
+    },
+    name: 'GoogleSignIn',
+    options: { title: 'Native Google Sign-In' },
   },
   {
     getComponent() {
@@ -201,15 +241,16 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
-      return optionalRequire(() => require('../screens/ImageManipulatorScreenLegacy'));
+      return optionalRequire(() => require('../screens/ImagePickerScreen'));
     },
-    name: 'ImageManipulator (legacy)',
+    name: 'ImagePicker',
   },
   {
     getComponent() {
-      return optionalRequire(() => require('../screens/ImagePicker/ImagePickerScreen'));
+      return optionalRequire(() => require('../screens/InAppPurchases/InAppPurchases'));
     },
-    name: 'ImagePicker',
+    name: 'InAppPurchases',
+    options: { title: 'In-App Purchases' },
   },
   {
     getComponent() {
@@ -269,12 +310,6 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
-      return optionalRequire(() => require('../screens/CryptoScreen'));
-    },
-    name: 'Crypto',
-  },
-  {
-    getComponent() {
       return optionalRequire(() => require('../screens/NotificationScreen'));
     },
     name: 'Notification',
@@ -312,9 +347,28 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
+      return optionalRequire(() => require('../screens/PermissionsScreen'));
+    },
+    name: 'Permissions',
+  },
+  {
+    getComponent() {
       return optionalRequire(() => require('../screens/PrintScreen'));
     },
     name: 'Print',
+  },
+  {
+    getComponent() {
+      return optionalRequire(() => require('../screens/AV/RecordingScreen'));
+    },
+    name: 'Recording',
+    options: { title: 'Audio Recording' },
+  },
+  {
+    getComponent() {
+      return optionalRequire(() => require('../screens/RandomScreen'));
+    },
+    name: 'Random',
   },
   {
     getComponent() {
@@ -360,18 +414,6 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
-      return optionalRequire(() => require('../screens/NavigationBarScreen'));
-    },
-    name: 'NavigationBar',
-  },
-  {
-    getComponent() {
-      return optionalRequire(() => require('../screens/SystemUIScreen'));
-    },
-    name: 'SystemUI',
-  },
-  {
-    getComponent() {
       return optionalRequire(() => require('../screens/SMSScreen'));
     },
     name: 'SMS',
@@ -405,15 +447,9 @@ export const Screens: ScreenConfig[] = [
   },
   {
     getComponent() {
-      return optionalRequire(() => require('../screens/WebBrowser/WebBrowserScreen'));
+      return optionalRequire(() => require('../screens/WebBrowserScreen'));
     },
     name: 'WebBrowser',
-  },
-  {
-    getComponent() {
-      return optionalRequire(() => require('../screens/VideoThumbnailsScreen'));
-    },
-    name: 'Video Thumbnails',
   },
   {
     getComponent() {
@@ -421,8 +457,6 @@ export const Screens: ScreenConfig[] = [
     },
     name: 'ViewShot',
   },
-  ...ModulesCoreScreens,
-  ...AudioScreens,
 ];
 
 function ExpoApisStackNavigator(props: { navigation: BottomTabNavigationProp<any> }) {
@@ -431,7 +465,7 @@ function ExpoApisStackNavigator(props: { navigation: BottomTabNavigationProp<any
       <Stack.Screen name="ExpoApis" options={{ title: 'APIs in Expo SDK' }} component={ExpoApis} />
 
       {Screens.map(({ name, options, getComponent }) => (
-        <Stack.Screen name={name} key={name} getComponent={getComponent} options={options ?? {}} />
+        <Stack.Screen name={name} key={name} getComponent={getComponent} options={options || {}} />
       ))}
     </Stack.Navigator>
   );

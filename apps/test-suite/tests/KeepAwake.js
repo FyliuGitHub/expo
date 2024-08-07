@@ -8,31 +8,21 @@ export async function test(
 ) {
   describe(name, () => {
     afterAll(async () => {
-      if (await KeepAwake.isAvailableAsync()) {
-        await KeepAwake.deactivateKeepAwake();
-        await KeepAwake.deactivateKeepAwake('test-tag');
-      }
+      await KeepAwake.deactivateKeepAwake();
+      await KeepAwake.deactivateKeepAwake('test-tag');
     });
 
     it(`keeps the screen on`, async () => {
-      if (await KeepAwake.isAvailableAsync()) {
-        await KeepAwake.activateKeepAwakeAsync();
-      }
+      await KeepAwake.activateKeepAwake();
     });
     it(`keeps the screen on with a tag`, async () => {
-      if (await KeepAwake.isAvailableAsync()) {
-        await KeepAwake.activateKeepAwakeAsync('test-tag');
-      }
+      await KeepAwake.activateKeepAwake('test-tag');
     });
     it(`enables screen timeout`, async () => {
-      if (await KeepAwake.isAvailableAsync()) {
-        await KeepAwake.deactivateKeepAwake();
-      }
+      await KeepAwake.deactivateKeepAwake();
     });
     it(`enables screen timeout with a tag`, async () => {
-      if (await KeepAwake.isAvailableAsync()) {
-        await KeepAwake.deactivateKeepAwake('test-tag');
-      }
+      await KeepAwake.deactivateKeepAwake('test-tag');
     });
   });
 }

@@ -3,7 +3,9 @@ import React from 'react';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import SimpleActionDemo from '../../components/SimpleActionDemo';
+import TitleSwitch from '../../components/TitledSwitch';
 import usePermissions from '../../utilities/usePermissions';
+// Location.setGoogleApiKey('<PROVIDE_YOUR_OWN_API_KEY HERE>');
 
 const forwardGeocodingAddresses = [
   '1 Hacker Way, CA',
@@ -24,8 +26,19 @@ const reverseGeocodingCoords = [
 export default function GeocodingScreen() {
   usePermissions(Location.requestForegroundPermissionsAsync);
 
+  const [useGoogleMaps, setGoogleMaps] = React.useState(false);
+
+  const toggleGoogleMaps = () => setGoogleMaps((value) => !value);
+
   return (
     <ScrollView style={styles.container}>
+      <TitleSwitch
+        style={styles.switch}
+        title="Use Google Maps API"
+        value={useGoogleMaps}
+        setValue={toggleGoogleMaps}
+      />
+
       <View style={styles.headerContainer}>
         <Text style={styles.headerText}>Forward-Geocoding</Text>
       </View>
@@ -33,7 +46,7 @@ export default function GeocodingScreen() {
         <SimpleActionDemo
           key={index}
           title={address}
-          action={() => Location.geocodeAsync(address)}
+          action={() => Location.geocodeAsync(address, { useGoogleMaps })}
         />
       ))}
 
@@ -44,7 +57,7 @@ export default function GeocodingScreen() {
         <SimpleActionDemo
           key={index}
           title={`${coords.latitude}, ${coords.longitude}`}
-          action={() => Location.reverseGeocodeAsync(coords)}
+          action={() => Location.reverseGeocodeAsync(coords, { useGoogleMaps })}
         />
       ))}
       <SimpleActionDemo
@@ -53,7 +66,7 @@ export default function GeocodingScreen() {
           const location = await Location.getCurrentPositionAsync({
             accuracy: Location.LocationAccuracy.Lowest,
           });
-          return Location.reverseGeocodeAsync(location.coords);
+          return Location.reverseGeocodeAsync(location.coords, { useGoogleMaps });
         }}
       />
     </ScrollView>

@@ -22,10 +22,6 @@ const SegmentedControlScreen = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.text}>
-        Note: Only the last control on this screen is expected to change state
-      </Text>
-
       <View style={styles.segmentContainer}>
         <Text style={styles.text}>Segmented controls can have values and images</Text>
         <SegmentedControl values={['One', 'Two', require('../../assets/images/user.png')]} />
@@ -83,7 +79,7 @@ const SegmentedControlScreen = () => {
       </View>
 
       <View>
-        <Text style={styles.text}>Selected value and index are available via callbacks</Text>
+        <Text style={styles.text}>Custom colors can be provided</Text>
         <View style={styles.segmentContainer}>
           <SegmentedControl
             values={values}

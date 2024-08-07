@@ -1,6 +1,7 @@
-import { Camera, CameraType } from 'expo-camera/legacy';
+import { Camera } from 'expo-camera';
 import * as GL from 'expo-gl';
 import { GLView } from 'expo-gl';
+import * as Permissions from 'expo-permissions';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -38,7 +39,7 @@ class GLCameraScreen extends React.Component<{}, State> {
 
   readonly state: State = {
     zoom: 0,
-    type: CameraType.back,
+    type: Camera.Constants.Type.back,
   };
 
   _rafID?: number;
@@ -53,7 +54,7 @@ class GLCameraScreen extends React.Component<{}, State> {
   }
 
   async createCameraTexture(): Promise<WebGLTexture> {
-    const { status } = await Camera.requestCameraPermissionsAsync();
+    const { status } = await Permissions.askAsync(Permissions.CAMERA);
 
     if (status !== 'granted') {
       throw new Error('Denied camera permissions!');
@@ -126,7 +127,10 @@ class GLCameraScreen extends React.Component<{}, State> {
 
   toggleFacing = () => {
     this.setState((state) => ({
-      type: state.type === CameraType.back ? CameraType.front : CameraType.back,
+      type:
+        state.type === Camera.Constants.Type.back
+          ? Camera.Constants.Type.front
+          : Camera.Constants.Type.back,
     }));
   };
 

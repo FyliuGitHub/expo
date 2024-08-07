@@ -1,5 +1,5 @@
-import { anyAnimationDriver, tintColor, tintColor2 } from './constants';
 import { ImageTestGroup, ImageTestPropsFnInput } from '../types';
+import { tintColor, tintColor2 } from './constants';
 
 const imageTests: ImageTestGroup = {
   name: 'Appearance',
@@ -57,14 +57,12 @@ const imageTests: ImageTestGroup = {
     },
     {
       name: 'Blur radius',
-      animationDriver: anyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         blurRadius: range(0, 60),
       }),
     },
     {
       name: 'Opacity',
-      animationDriver: anyAnimationDriver,
       props: ({ range }: ImageTestPropsFnInput) => ({
         style: {
           opacity: range(0, 1),
@@ -74,7 +72,6 @@ const imageTests: ImageTestGroup = {
     {
       name: 'Tint color',
       props: {
-        tintColor,
         style: {
           tintColor,
         },
@@ -83,7 +80,6 @@ const imageTests: ImageTestGroup = {
     {
       name: 'Tint color 2',
       props: {
-        tintColor: tintColor2,
         style: {
           tintColor: tintColor2,
         },

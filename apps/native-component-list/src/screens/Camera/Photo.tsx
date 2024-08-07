@@ -1,39 +1,28 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import * as VideoThumbnails from 'expo-video-thumbnails';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
+import * as FaceDetector from 'expo-face-detector';
 import React from 'react';
-import { Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const pictureSize = 150;
 
-type State = {
-  uri?: string;
+interface State {
   selected: boolean;
-  isVideo: boolean;
-};
+  faces: FaceDetector.FaceFeature[];
+  image?: FaceDetector.Image;
+}
 
-type Props = {
-  uri: string;
-  onSelectionToggle: (uri: string, selected: boolean) => void;
-};
-
-export default class Photo extends React.Component<Props, State> {
+export default class Photo extends React.Component<
+  { uri: string; onSelectionToggle: (uri: string, selected: boolean) => void },
+  State
+> {
   readonly state: State = {
     selected: false,
-    uri: undefined,
-    isVideo: false,
+    faces: [],
   };
   _mounted = false;
 
   componentDidMount() {
     this._mounted = true;
-
-    if (this.props.uri.endsWith('jpg')) {
-      this.setState(() => ({ uri: this.props.uri }));
-    } else {
-      this.getVideoThumbnail(this.props.uri).then((uri) =>
-        this.setState(() => ({ uri, isVideo: true }))
-      );
-    }
   }
 
   componentWillUnmount() {
@@ -43,32 +32,105 @@ export default class Photo extends React.Component<Props, State> {
   toggleSelection = () => {
     this.setState(
       (state) => ({ selected: !state.selected }),
-      () => this.props.uri && this.props.onSelectionToggle(this.props.uri, this.state.selected)
+      () => this.props.onSelectionToggle(this.props.uri, this.state.selected)
     );
   };
 
-  getVideoThumbnail = async (videoUri: string) => {
-    try {
-      const { uri } = await VideoThumbnails.getThumbnailAsync(videoUri, { time: 250 });
-      return uri;
-    } catch (error) {
-      console.warn(error);
-      return undefined;
+  detectFace = () =>
+    FaceDetector.detectFacesAsync(this.props.uri, {
+      detectLandmarks: FaceDetector.FaceDetectorLandmarks.none,
+      runClassifications: FaceDetector.FaceDetectorClassifications.all,
+    })
+      .then(this.facesDetected)
+      .catch(this.handleFaceDetectionError);
+
+  facesDetected = ({
+    faces,
+    image,
+  }: {
+    faces: FaceDetector.FaceFeature[];
+    image: FaceDetector.Image;
+  }) => {
+    this.setState({
+      faces,
+      image,
+    });
+  };
+
+  getImageDimensions = ({ width, height }: FaceDetector.Image) => {
+    if (width > height) {
+      const scaledHeight = (pictureSize * height) / width;
+      return {
+        width: pictureSize,
+        height: scaledHeight,
+
+        scaleX: pictureSize / width,
+        scaleY: scaledHeight / height,
+
+        offsetX: 0,
+        offsetY: (pictureSize - scaledHeight) / 2,
+      };
+    } else {
+      const scaledWidth = (pictureSize * width) / height;
+      return {
+        width: scaledWidth,
+        height: pictureSize,
+
+        scaleX: scaledWidth / width,
+        scaleY: pictureSize / height,
+
+        offsetX: (pictureSize - scaledWidth) / 2,
+        offsetY: 0,
+      };
     }
   };
 
+  // tslint:disable-next-line no-console
+  handleFaceDetectionError = (error: any) => console.warn(error);
+
+  renderFaces = () => this.state.image && this.state.faces && this.state.faces.map(this.renderFace);
+
+  renderFace = (face: FaceDetector.FaceFeature, index: number) => {
+    const { scaleX, scaleY, offsetX, offsetY } = this.getImageDimensions(this.state.image!);
+    const layout = {
+      top: offsetY + face.bounds.origin.y * scaleY,
+      left: offsetX + face.bounds.origin.x * scaleX,
+      width: face.bounds.size.width * scaleX,
+      height: face.bounds.size.height * scaleY,
+    };
+
+    return (
+      <View
+        key={index}
+        style={[
+          styles.face,
+          layout,
+          {
+            transform: [
+              { perspective: 600 },
+              { rotateZ: `${(face.rollAngle || 0).toFixed(0)}deg` },
+              { rotateY: `${(face.yawAngle || 0).toFixed(0)}deg` },
+            ],
+          },
+        ]}>
+        {face.smilingProbability && (
+          <Text style={styles.faceText}>😁 {(face.smilingProbability * 100).toFixed(0)}%</Text>
+        )}
+      </View>
+    );
+  };
+
   render() {
-    const { uri } = this.state;
+    const { uri } = this.props;
     return (
       <TouchableOpacity
         style={styles.pictureWrapper}
+        onLongPress={this.detectFace}
         onPress={this.toggleSelection}
         activeOpacity={1}>
-        {uri && <Image style={styles.picture} source={{ uri }} />}
-        {this.state.isVideo && (
-          <Ionicons name="videocam" size={24} color="#ffffffbb" style={styles.videoIcon} />
-        )}
-        {this.state.selected && <Ionicons name="checkmark-circle" size={30} color="#4630EB" />}
+        <Image style={styles.picture} source={{ uri }} />
+        {this.state.selected && <Ionicons name="md-checkmark-circle" size={30} color="#4630EB" />}
+        <View style={styles.facesContainer}>{this.renderFaces()}</View>
       </TouchableOpacity>
     );
   }
@@ -112,10 +174,5 @@ const styles = StyleSheet.create({
     margin: 2,
     fontSize: 10,
     backgroundColor: 'transparent',
-  },
-  videoIcon: {
-    position: 'absolute',
-    bottom: 0,
-    right: 36,
   },
 });

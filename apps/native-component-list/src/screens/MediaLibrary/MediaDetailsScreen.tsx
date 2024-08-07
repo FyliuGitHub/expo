@@ -1,8 +1,7 @@
 import { StackScreenProps } from '@react-navigation/stack';
-import { Image } from 'expo-image';
 import * as MediaLibrary from 'expo-media-library';
 import React from 'react';
-import { ScrollView, StyleSheet, View, Alert } from 'react-native';
+import { Image, ScrollView, StyleSheet, View, Alert } from 'react-native';
 
 import Button from '../../components/Button';
 import HeadingText from '../../components/HeadingText';
@@ -91,7 +90,7 @@ export default class MediaDetailsScreen extends React.Component<Props> {
           <Image
             style={[styles.image, { aspectRatio }]}
             source={{ uri: asset.uri }}
-            contentFit="cover"
+            resizeMode="cover"
           />
         );
       default:
